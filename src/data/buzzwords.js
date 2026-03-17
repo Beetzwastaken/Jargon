@@ -2,7 +2,7 @@
 // Updated: January 2025 - Focused on high-impact corporate humor
 // Total: 171 professionally selected buzzwords (spoken phrases + observable actions)
 
-export const CORPORATE_BINGO = [
+export const JARGON_PHRASES = [
   "Circle Back",
   "Touch Base", 
   "Take This Offline",
@@ -177,4 +177,4 @@ export const CORPORATE_BINGO = [
 ];
 
 // For backward compatibility
-export const CORPORATE_BUZZWORDS = CORPORATE_BINGO;
+export const CORPORATE_BUZZWORDS = JARGON_PHRASES;

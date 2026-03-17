@@ -1,6 +1,6 @@
-// Bingo game engine for corporate buzzword bingo
+// Bingo game engine for Jargon
 // Simplified scoring: +1 per square, +5 BINGO bonus only (no 3/4-in-row)
-import { CORPORATE_BINGO } from '../data/buzzwords';
+import { JARGON_PHRASES } from '../data/buzzwords';
 
 export interface BingoSquare {
   id: string;
@@ -33,7 +33,7 @@ export class BingoEngine {
    * Generate a new bingo card with random buzzwords
    */
   static generateCard(): BingoSquare[] {
-    const shuffled = [...CORPORATE_BINGO].sort(() => Math.random() - 0.5);
+    const shuffled = [...JARGON_PHRASES].sort(() => Math.random() - 0.5);
     const selected = shuffled.slice(0, 25); // 25 buzzwords, no free space
 
     const card: BingoSquare[] = [];

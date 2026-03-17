@@ -1,7 +1,7 @@
 // Daily Card Generation - Deterministic seeded shuffle for global daily cards
 // Same date = same card for everyone worldwide
 
-import { CORPORATE_BINGO as buzzwords } from '../data/buzzwords';
+import { JARGON_PHRASES as buzzwords } from '../data/buzzwords';
 import type { BingoSquare } from '../types';
 
 /**
