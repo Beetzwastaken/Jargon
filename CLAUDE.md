@@ -18,7 +18,7 @@
 ### Solo
 - Random card, mark squares during any meeting, track score
 - Pure client-side, no backend needed
-- **Status**: Needs building (gameStore.ts exists but disconnected)
+- **Status**: Built — toggleable squares, undoable bingo, persistent score
 
 ### Duo
 - 2 players pair up in same meeting, share daily card
@@ -47,8 +47,7 @@
 |-------|---------|
 | `duoStore` | Pairing, lines, scores, game state |
 | `connectionStore` | WebSocket/polling, routes messages |
-| `uiStore` | Modals, sidebar |
-| `gameStore` | Solo mode (disconnected, needs re-wire) |
+| `soloStore` | Solo mode state + localStorage persist |
 
 ### Backend (worker.js)
 
