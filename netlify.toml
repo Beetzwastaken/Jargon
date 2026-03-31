@@ -5,8 +5,8 @@
 
 [build.environment]
   NODE_VERSION = "20"
-  VITE_API_URL = "https://corporate-bingo-api.ryanwixon15.workers.dev"
-  VITE_WS_URL = "wss://corporate-bingo-api.ryanwixon15.workers.dev"
+  VITE_API_URL = "https://api.playjargon.com"
+  VITE_WS_URL = "wss://api.playjargon.com"
 
 [[headers]]
   for = "/index.html"
@@ -15,7 +15,7 @@
     X-XSS-Protection = "1; mode=block"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' wss://corporate-bingo-api.ryanwixon15.workers.dev https://corporate-bingo-api.ryanwixon15.workers.dev; img-src 'self' data:; font-src 'self'"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' wss://api.playjargon.com https://api.playjargon.com; img-src 'self' data:; font-src 'self'"
     Cache-Control = "no-cache, no-store, must-revalidate"
 
 [[headers]]
@@ -32,7 +32,7 @@
 # Proxy API requests to avoid CORS/SSL issues
 [[redirects]]
   from = "/api/*"
-  to = "https://corporate-bingo-api.ryanwixon15.workers.dev/api/:splat"
+  to = "https://api.playjargon.com/api/:splat"
   status = 200
   force = true
 

@@ -7,8 +7,8 @@
 | Item | Value |
 |------|-------|
 | **Version** | v2.0.0 |
-| **Frontend URL** | https://corporate-bingo-ai.netlify.app |
-| **Backend URL** | https://corporate-bingo-api.ryanwixon15.workers.dev |
+| **Frontend URL** | https://playjargon.com |
+| **Backend URL** | https://api.playjargon.com |
 | **Launch Target** | March 20, 2026 |
 
 ---

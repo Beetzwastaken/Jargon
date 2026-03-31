@@ -8,7 +8,7 @@ export const API_CONFIG = {
   },
   production: {
     baseUrl: '', // Use relative URLs - Netlify will proxy to backend
-    wsUrl: 'wss://corporate-bingo-api.ryanwixon15.workers.dev'
+    wsUrl: 'wss://api.playjargon.com'
   }
 };
 
