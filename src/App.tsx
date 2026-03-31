@@ -92,14 +92,14 @@ function App() {
 
   // Check for first visit
   useEffect(() => {
-    const hasSeenTutorial = localStorage.getItem('cb_tutorial_completed');
+    const hasSeenTutorial = localStorage.getItem('jargon_tutorial_completed');
     if (!hasSeenTutorial) {
       setShowTutorial(true);
     }
   }, []);
 
   const handleTutorialComplete = () => {
-    localStorage.setItem('cb_tutorial_completed', 'true');
+    localStorage.setItem('jargon_tutorial_completed', 'true');
     setShowTutorial(false);
   };
 
