@@ -1,5 +1,4 @@
 // Central export for all stores
-export { useUIStore } from './uiStore';
 export { useConnectionStore } from './connectionStore';
 export { useDuoStore, regenerateDailyCardIfNeeded } from './duoStore';
 
