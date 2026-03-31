@@ -1,10 +1,11 @@
 // Jargon Buzzwords - Professional Curated List
-// Updated: January 2025 - Focused on high-impact corporate humor
-// Total: 171 professionally selected buzzwords (spoken phrases + observable actions)
+// DUPLICATE: worker.js imports this .js file directly (no TS build step).
+// Source of truth is buzzwords.ts — keep both files in sync.
+// Total: 172 professionally selected buzzwords
 
 export const JARGON_PHRASES = [
   "Circle Back",
-  "Touch Base", 
+  "Touch Base",
   "Take This Offline",
   "You're Muted",
   "Can You Hear Me?",
@@ -63,9 +64,6 @@ export const JARGON_PHRASES = [
   "Iterate",
   "Machine Learning",
   "Big Data",
-  "Rockstar",
-  "Ninja",
-  "Guru",
   "Thought Leader",
   "Self-starter",
   "Team Player",
@@ -76,7 +74,6 @@ export const JARGON_PHRASES = [
   "Run it Up the Flagpole",
   "Herding Cats",
   "Ducks in a Row",
-  "Throw Spaghetti",
   "Parking Lot",
   "Action Items",
   "Deliverables",
@@ -148,7 +145,6 @@ export const JARGON_PHRASES = [
   "Above My Paygrade",
   "Apples to Apples",
   "Move Fast Break Things",
-  "Drink the Kool-Aid",
   "Boots on the Ground",
   "Push the Envelope",
   "Raise the Bar",
@@ -171,9 +167,15 @@ export const JARGON_PHRASES = [
   "Let's Take a Step Back",
   "Quick Win",
   "Give You Back X Minutes",
-  "Color Commentary",
   "Optics",
-  "Swim Lane"
+  "Swim Lane",
+  "Can Everyone See My Screen?",
+  "I'll Drop It in the Chat",
+  "Do More with Less",
+  "Double Down",
+  "Sorry, Go Ahead",
+  "I Have a Hard Stop At...",
+  "Friendly Reminder"
 ];
 
 // For backward compatibility
