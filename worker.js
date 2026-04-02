@@ -626,10 +626,18 @@ export class BingoRoom {
       last_activity: Date.now()
     });
 
-    this.broadcastToRoom({
+    const updatedRoom = this.getRoom();
+    this.sendToPlayer(room.host_id, {
       type: 'partner_joined',
       partnerId,
-      partnerName: playerName
+      partnerName: playerName,
+      isMyTurnToPick: this.isPickTurn(room.host_id, updatedRoom)
+    });
+    this.sendToPlayer(partnerId, {
+      type: 'partner_joined',
+      partnerId: room.host_id,
+      partnerName: room.host_name,
+      isMyTurnToPick: this.isPickTurn(partnerId, updatedRoom)
     });
 
     return new Response(JSON.stringify({

@@ -156,6 +156,9 @@ function handleWebSocketMessage(message: DuoWebSocketMessage): void {
           id: message.partnerId,
           name: message.partnerName
         });
+        if (typeof message.isMyTurnToPick === 'boolean') {
+          useDuoStore.setState({ isMyTurnToPick: message.isMyTurnToPick });
+        }
       }
       break;
 
