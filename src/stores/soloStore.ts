@@ -95,41 +95,38 @@ export const useSoloStore = create<SoloStore>()(
           let newScore = Math.max(0, state.score + (newMarked[index] ? 1 : -1));
           let newBingo = false;
           let newWinningLine: WinningLine | null = null;
+          const hadBingo = state.hasBingo;
 
           // Check all 12 possible lines
           const linesToCheck: WinningLine[] = [
-            // Rows
-            { type: 'row', index: 0 },
-            { type: 'row', index: 1 },
-            { type: 'row', index: 2 },
-            { type: 'row', index: 3 },
+            { type: 'row', index: 0 }, { type: 'row', index: 1 },
+            { type: 'row', index: 2 }, { type: 'row', index: 3 },
             { type: 'row', index: 4 },
-            // Cols
-            { type: 'col', index: 0 },
-            { type: 'col', index: 1 },
-            { type: 'col', index: 2 },
-            { type: 'col', index: 3 },
+            { type: 'col', index: 0 }, { type: 'col', index: 1 },
+            { type: 'col', index: 2 }, { type: 'col', index: 3 },
             { type: 'col', index: 4 },
-            // Diags
-            { type: 'diag', index: 0 },
-            { type: 'diag', index: 1 }
+            { type: 'diag', index: 0 }, { type: 'diag', index: 1 }
           ];
 
           for (const line of linesToCheck) {
             if (isLineComplete(newMarked, line)) {
               newBingo = true;
               newWinningLine = line;
-              newScore += 5; // Bonus for bingo
+              if (!hadBingo) newScore += 5; // Bonus only on first bingo
               break;
             }
           }
+
+          // Score delta for totalScore: +1 mark, -1 unmark, +6 first bingo
+          const delta = newMarked[index] ? 1 : -1;
+          const bingoBonus = (newBingo && !hadBingo) ? 5 : 0;
 
           set({
             markedSquares: newMarked,
             score: newScore,
             hasBingo: newBingo,
             winningLine: newWinningLine,
-            totalScore: Math.max(0, state.totalScore + (newBingo ? 6 : (newMarked[index] ? 1 : -1)))
+            totalScore: Math.max(0, state.totalScore + delta + bingoBonus)
           });
         },
 
