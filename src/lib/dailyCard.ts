@@ -65,6 +65,19 @@ export function generateDailyCard(dateString: string): BingoSquare[] {
 }
 
 /**
+ * Generate a random card from a numeric seed (not date-based)
+ */
+export function generateRandomCard(numericSeed: number): BingoSquare[] {
+  const rng = mulberry32(numericSeed);
+  const shuffled = seededShuffle([...buzzwords], rng);
+  return shuffled.slice(0, 25).map((text: string, index: number) => ({
+    id: `square-${index}`,
+    text,
+    isMarked: false
+  }));
+}
+
+/**
  * Get today's date string in UTC
  * @returns YYYY-MM-DD string for current UTC date
  */

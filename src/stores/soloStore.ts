@@ -3,6 +3,7 @@ import { devtools, persist } from 'zustand/middleware';
 import type { BingoSquare } from '../types';
 import {
   generateDailyCard,
+  generateRandomCard,
   getTodayDateString,
   hasNewDayStarted,
   isLineComplete
@@ -58,9 +59,9 @@ export const useSoloStore = create<SoloStore>()(
           const state = get();
           const today = getTodayDateString();
 
-          // Check if date changed
-          if (state.currentDateSeed && hasNewDayStarted(state.currentDateSeed)) {
-            // New day - reset marks, keep game counters
+          // Daily reset: if seed is a date format and it's a new day, reset
+          const isDateSeed = /^\d{4}-\d{2}-\d{2}$/.test(state.currentDateSeed);
+          if (state.dailyCard.length > 0 && isDateSeed && hasNewDayStarted(state.currentDateSeed)) {
             const newCard = generateDailyCard(today);
             set({
               dailyCard: newCard,
@@ -72,20 +73,24 @@ export const useSoloStore = create<SoloStore>()(
               winningLine: null,
               gamesPlayed: state.gamesPlayed + 1
             });
-          } else if (!state.dailyCard.length) {
-            // First init
-            const newCard = generateDailyCard(today);
-            set({
-              dailyCard: newCard,
-              markedSquares: Array(25).fill(false),
-              currentDateSeed: today,
-              score: 0,
-              hasBingo: false,
-              bingoAwarded: false,
-              winningLine: null,
-              gamesPlayed: state.gamesPlayed || 1
-            });
+            return;
           }
+
+          // Already have a card (including shuffled) — don't clobber
+          if (state.dailyCard.length > 0) return;
+
+          // First init
+          const newCard = generateDailyCard(today);
+          set({
+            dailyCard: newCard,
+            markedSquares: Array(25).fill(false),
+            currentDateSeed: today,
+            score: 0,
+            hasBingo: false,
+            bingoAwarded: false,
+            winningLine: null,
+            gamesPlayed: state.gamesPlayed || 1
+          });
         },
 
         markSquare: (index: number) => {
@@ -156,8 +161,8 @@ export const useSoloStore = create<SoloStore>()(
 
         shuffleNewCard: () => {
           const state = get();
-          const seed = `${Date.now()}-${Math.random()}`;
-          const newCard = generateDailyCard(seed);
+          const seed = Date.now() ^ (Math.random() * 0xFFFFFFFF);
+          const newCard = generateRandomCard(seed);
 
           set({
             dailyCard: newCard,
