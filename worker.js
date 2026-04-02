@@ -832,6 +832,7 @@ export class BingoRoom {
       this.broadcastToRoom({
         type: 'square_unmarked',
         index,
+        markedBy: playerId,
         hostScore: scores.hostScore,
         partnerScore: scores.partnerScore
       });
@@ -867,23 +868,33 @@ export class BingoRoom {
 
     // Check BINGO (score = 5)
     if (myScore >= 5) {
+      // Broadcast the final mark before game_over so partner sees it
+      this.broadcastToRoom({
+        type: 'square_marked',
+        index,
+        markedBy: playerId,
+        hostScore: scores.hostScore,
+        partnerScore: scores.partnerScore
+      });
+
       this.updateRoom({ phase: 'finished', last_activity: Date.now() });
 
       // Store snapshot
-      const winner = isHost ? room.host_name : room.partner_name;
+      const winnerName = isHost ? room.host_name : room.partner_name;
+      const winnerRole = isHost ? 'host' : 'partner';
       const allMarks = this.getMarks();
       this.sql.exec(
         `INSERT OR REPLACE INTO snapshots (date, host_id, host_name, partner_id, partner_name, host_score, partner_score, winner, host_line, partner_line, marks_json)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         room.daily_seed, room.host_id, room.host_name, room.partner_id, room.partner_name,
-        scores.hostScore, scores.partnerScore, winner,
+        scores.hostScore, scores.partnerScore, winnerName,
         JSON.stringify(room.host_line), JSON.stringify(room.partner_line),
         JSON.stringify(allMarks)
       );
 
       this.broadcastToRoom({
         type: 'game_over',
-        winner,
+        winner: winnerRole,
         hostScore: scores.hostScore,
         partnerScore: scores.partnerScore,
         hostLine: room.host_line,
@@ -958,7 +969,7 @@ export class BingoRoom {
       hostName: room.host_name,
       partnerName: room.partner_name,
       isPaired: !!room.partner_id,
-      marks: marks.map(m => ({ idx: m.idx, markedBy: m.marked_by })),
+      marks: marks.map(m => ({ index: m.idx, markedBy: m.marked_by })),
       myScore,
       partnerScore: partnerScoreVal,
       card
@@ -980,8 +991,8 @@ export class BingoRoom {
       response.myLine = isHost ? room.host_line : room.partner_line;
       response.partnerLine = isHost ? room.partner_line : room.host_line;
       // Determine winner
-      if (scores.hostScore >= 5) response.winner = room.host_name;
-      else if (scores.partnerScore >= 5) response.winner = room.partner_name;
+      if (scores.hostScore >= 5) response.winner = 'host';
+      else if (scores.partnerScore >= 5) response.winner = 'partner';
       else response.winner = null;
     }
 

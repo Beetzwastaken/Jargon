@@ -100,7 +100,7 @@ interface DuoActions {
   handleYourTurnToPick: () => void;
   handleBothSelected: () => void;
   handleSquareMarked: (index: number, markedBy: string, myScore: number, partnerScore: number) => void;
-  handleSquareUnmarked: (index: number, myScore: number, partnerScore: number) => void;
+  handleSquareUnmarked: (index: number, markedBy: string | undefined, myScore: number, partnerScore: number) => void;
   handleGameOver: (winner: string, myScore: number, partnerScore: number, hostLine: LineSelection, partnerLine: LineSelection) => void;
   handleDailyReset: (newSeed: string) => void;
 
@@ -339,10 +339,12 @@ export const useDuoStore = create<DuoStore>()(
         },
 
         // Handle square unmarked
-        handleSquareUnmarked: (index: number, myScore: number, partnerScore: number) => {
+        handleSquareUnmarked: (index: number, markedBy: string | undefined, myScore: number, partnerScore: number) => {
           const state = get();
           set({
-            marks: state.marks.filter(m => m.index !== index),
+            marks: markedBy
+              ? state.marks.filter(m => !(m.index === index && m.markedBy === markedBy))
+              : state.marks.filter(m => m.index !== index),
             myScore,
             partnerScore,
           });

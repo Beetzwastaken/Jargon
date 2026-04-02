@@ -190,7 +190,7 @@ function handleWebSocketMessage(message: DuoWebSocketMessage): void {
         const isHost = ds.isHost;
         const myScore = isHost ? (message.hostScore ?? ds.myScore) : (message.partnerScore ?? ds.myScore);
         const partnerScore = isHost ? (message.partnerScore ?? ds.partnerScore) : (message.hostScore ?? ds.partnerScore);
-        duoStore.handleSquareUnmarked(message.index, myScore, partnerScore);
+        duoStore.handleSquareUnmarked(message.index, message.markedBy, myScore, partnerScore);
       }
       break;
 
