@@ -10,7 +10,7 @@ export { DashboardAnalytics } from './analytics-worker.js';
 // CORS helper
 function corsHeaders(origin) {
   const allowedOrigins = [
-    'https://corporate-bingo-ai.netlify.app',
+    'https://playjargon.com',
     'http://localhost:8080',
     'http://localhost:3000',
     'http://localhost:5174',
@@ -66,20 +66,9 @@ function generateDailyCard(dateString) {
   return shuffled.slice(0, 25);
 }
 
-// Get today's date in timezone
-function getTodayInTimezone(timezone) {
-  try {
-    const now = new Date();
-    const formatter = new Intl.DateTimeFormat('en-CA', {
-      timeZone: timezone,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    });
-    return formatter.format(now);
-  } catch {
-    return new Date().toISOString().split('T')[0];
-  }
+// Get today's date in UTC
+function getTodayUTC() {
+  return new Date().toISOString().split('T')[0];
 }
 
 // Get line indices for scoring
@@ -428,7 +417,7 @@ export class BingoRoom {
     const { playerName, roomCode, timezone } = await request.json();
 
     const hostId = crypto.randomUUID();
-    const dailySeed = getTodayInTimezone(timezone);
+    const dailySeed = getTodayUTC();
 
     this.room = {
       code: roomCode,
@@ -844,7 +833,7 @@ export class BingoRoom {
     }
 
     // Check for daily reset
-    const currentDate = getTodayInTimezone(this.room.pairTimezone);
+    const currentDate = getTodayUTC();
     if (currentDate !== this.room.dailySeed) {
       // New day! Reset game state
       this.room.dailySeed = currentDate;

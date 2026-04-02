@@ -6,7 +6,6 @@ import type { BingoPlayer } from '../types/shared';
 import {
   generateDailyCard,
   getTodayDateString,
-  getLocalTimezone,
   hasNewDayStarted,
   getLineIndices,
   isLineComplete
@@ -100,7 +99,7 @@ const initialState: DuoState = {
   partnerName: null,
   isPaired: false,
   isHost: false,
-  pairTimezone: getLocalTimezone(),
+  pairTimezone: 'UTC',
 
   phase: 'unpaired',
 
@@ -126,9 +125,7 @@ export const useDuoStore = create<DuoStore>()(
 
         // Create a new game as host
         createGame: async (playerName: string) => {
-          const timezone = getLocalTimezone();
-
-          const response = await createDuoGame(playerName, timezone);
+          const response = await createDuoGame(playerName, 'UTC');
 
           if (!response.success || !response.data) {
             return { success: false, error: response.error || 'Failed to create game' };
@@ -143,7 +140,7 @@ export const useDuoStore = create<DuoStore>()(
             isHost: true,
             isPaired: false,
             phase: 'waiting',
-            pairTimezone: timezone,
+            pairTimezone: 'UTC',
             dailySeed
           });
 
@@ -161,7 +158,7 @@ export const useDuoStore = create<DuoStore>()(
             return { success: false, error: response.error || 'Failed to join game' };
           }
 
-          const { playerId, partnerName, phase, timezone, dailySeed, isHost } = response.data;
+          const { playerId, partnerName, phase, dailySeed, isHost } = response.data;
 
           set({
             pairCode: code.toUpperCase(),
@@ -172,7 +169,7 @@ export const useDuoStore = create<DuoStore>()(
             isHost: isHost,
             isPaired: !isHost, // Partner is paired immediately, host waits
             phase: phase as DuoPhase,
-            pairTimezone: timezone,
+            pairTimezone: 'UTC',
             dailySeed
           });
 
@@ -224,7 +221,7 @@ export const useDuoStore = create<DuoStore>()(
             const myLine = isHost ? response.data.hostLine : response.data.partnerLine;
             const theirLine = isHost ? response.data.partnerLine : response.data.hostLine;
 
-            const card = generateDailyCard(state.dailySeed || getTodayDateString(state.pairTimezone));
+            const card = generateDailyCard(state.dailySeed || getTodayDateString());
             set({
               myLine,
               partnerLine: theirLine,
@@ -309,7 +306,7 @@ export const useDuoStore = create<DuoStore>()(
 
           // If we've also selected, transition to playing
           if (state.myLine) {
-            const card = generateDailyCard(state.dailySeed || getTodayDateString(state.pairTimezone));
+            const card = generateDailyCard(state.dailySeed || getTodayDateString());
             set({ dailyCard: card, phase: 'playing' });
           }
         },
@@ -317,7 +314,7 @@ export const useDuoStore = create<DuoStore>()(
         // Handle card reveal (both lines now visible)
         handleCardRevealed: (myLine: LineSelection, partnerLine: LineSelection) => {
           const state = get();
-          const card = generateDailyCard(state.dailySeed || getTodayDateString(state.pairTimezone));
+          const card = generateDailyCard(state.dailySeed || getTodayDateString());
 
           set({
             myLine,
@@ -366,7 +363,7 @@ export const useDuoStore = create<DuoStore>()(
         // Handle daily reset
         handleDailyReset: () => {
           const state = get();
-          const newSeed = getTodayDateString(state.pairTimezone);
+          const newSeed = getTodayDateString();
 
           set({
             myLine: null,
@@ -388,7 +385,7 @@ export const useDuoStore = create<DuoStore>()(
           const state = get();
           if (!state.dailySeed) return false;
 
-          if (hasNewDayStarted(state.pairTimezone, state.dailySeed)) {
+          if (hasNewDayStarted(state.dailySeed)) {
             get().handleDailyReset();
             return true;
           }
@@ -433,8 +430,7 @@ export const useDuoStore = create<DuoStore>()(
           if (!state) return;
           // Reset stale sessions: if phase isn't unpaired but date changed, room is dead
           if (state.phase !== 'unpaired' && state.dailySeed) {
-            const tz = state.pairTimezone || getLocalTimezone();
-            if (hasNewDayStarted(tz, state.dailySeed)) {
+            if (hasNewDayStarted(state.dailySeed)) {
               useDuoStore.setState(initialState);
               return;
             }
@@ -454,7 +450,7 @@ export function regenerateDailyCardIfNeeded(): void {
   const state = useDuoStore.getState();
 
   // Check for daily reset first
-  if (state.dailySeed && hasNewDayStarted(state.pairTimezone, state.dailySeed)) {
+  if (state.dailySeed && hasNewDayStarted(state.dailySeed)) {
     useDuoStore.getState().handleDailyReset();
     return;
   }

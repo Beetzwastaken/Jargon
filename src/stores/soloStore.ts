@@ -4,7 +4,6 @@ import type { BingoSquare } from '../types';
 import {
   generateDailyCard,
   getTodayDateString,
-  getLocalTimezone,
   hasNewDayStarted,
   isLineComplete
 } from '../lib/dailyCard';
@@ -54,11 +53,10 @@ export const useSoloStore = create<SoloStore>()(
 
         initializeCard: () => {
           const state = get();
-          const timezone = getLocalTimezone();
-          const today = getTodayDateString(timezone);
+          const today = getTodayDateString();
 
           // Check if date changed
-          if (state.currentDateSeed && hasNewDayStarted(timezone, state.currentDateSeed)) {
+          if (state.currentDateSeed && hasNewDayStarted(state.currentDateSeed)) {
             // New day - reset marks, keep game counters
             const newCard = generateDailyCard(today);
             set({
@@ -136,8 +134,7 @@ export const useSoloStore = create<SoloStore>()(
 
         resetForNewDay: () => {
           const state = get();
-          const timezone = getLocalTimezone();
-          const today = getTodayDateString(timezone);
+          const today = getTodayDateString();
           const newCard = generateDailyCard(today);
 
           set({

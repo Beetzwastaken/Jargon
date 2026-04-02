@@ -65,47 +65,21 @@ export function generateDailyCard(dateString: string): BingoSquare[] {
 }
 
 /**
- * Get today's date string in a specific timezone
- *
- * @param timezone - IANA timezone string (e.g., "America/New_York")
- * @returns YYYY-MM-DD string for current date in that timezone
+ * Get today's date string in UTC
+ * @returns YYYY-MM-DD string for current UTC date
  */
-export function getTodayDateString(timezone: string): string {
-  try {
-    const now = new Date();
-    const formatter = new Intl.DateTimeFormat('en-CA', {
-      timeZone: timezone,
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    });
-    // en-CA locale gives us YYYY-MM-DD format
-    return formatter.format(now);
-  } catch {
-    // Fallback to UTC if timezone is invalid
-    const now = new Date();
-    return now.toISOString().split('T')[0];
-  }
+export function getTodayDateString(): string {
+  const now = new Date();
+  return now.toISOString().split('T')[0];
 }
 
 /**
- * Get user's local timezone
- * @returns IANA timezone string
- */
-export function getLocalTimezone(): string {
-  return Intl.DateTimeFormat().resolvedOptions().timeZone;
-}
-
-/**
- * Check if we've crossed midnight in a timezone since a reference time
- * Used to detect when daily reset should occur
- *
- * @param timezone - IANA timezone string
+ * Check if we've crossed UTC midnight since a reference time
  * @param lastSeed - Previous day's seed string (YYYY-MM-DD)
- * @returns true if current date in timezone differs from lastSeed
+ * @returns true if current UTC date differs from lastSeed
  */
-export function hasNewDayStarted(timezone: string, lastSeed: string): boolean {
-  const currentDate = getTodayDateString(timezone);
+export function hasNewDayStarted(lastSeed: string): boolean {
+  const currentDate = getTodayDateString();
   return currentDate !== lastSeed;
 }
 
