@@ -1,4 +1,4 @@
-import jargonLogo from '../assets/jargon-logo.svg';
+import { JargonLogo } from './JargonLogo';
 
 interface ModeSelectorProps {
   onSelectMode: (mode: 'solo' | 'duo') => void;
@@ -20,7 +20,7 @@ export function ModeSelector({ onSelectMode }: ModeSelectorProps) {
       {/* Header */}
       <div className="text-center mb-14 relative animate-fade-in-up">
         <div className="w-16 h-16 mx-auto mb-5">
-          <img src={jargonLogo} alt="Jargon" className="w-full h-full" />
+          <JargonLogo size={64} />
         </div>
         <h1 className="text-5xl font-bold tracking-tight mb-2">
           <span className="text-j-accent">Jar</span><span className="text-j-text">gon</span>

@@ -3,7 +3,7 @@ import { BingoCard } from './bingo/BingoCard';
 import { BingoModal } from './bingo/BingoModal';
 import { useSoloStore } from '../stores/soloStore';
 import { ToastContainer, showGameToast } from './shared/ToastNotification';
-import jargonLogo from '../assets/jargon-logo.svg';
+import { JargonLogo } from './JargonLogo';
 
 interface SoloGameProps {
   onBack: () => void;
@@ -51,7 +51,7 @@ export function SoloGame({ onBack }: SoloGameProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center space-x-3">
-              <img src={jargonLogo} alt="Jargon" className="w-9 h-9 rounded-lg" />
+              <JargonLogo size={36} />
               <div>
                 <h1 className="text-base font-semibold text-j-text tracking-tight">Jargon</h1>
                 <span className="text-[10px] text-j-tertiary font-mono uppercase tracking-wider">Solo Mode</span>
