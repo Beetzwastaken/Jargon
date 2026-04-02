@@ -9,7 +9,16 @@
 | **Version** | v2.0.0 |
 | **Frontend URL** | https://playjargon.com |
 | **Backend URL** | https://api.playjargon.com |
-| **Launch Target** | March 20, 2026 |
+
+## Project Docs
+
+| Doc | Purpose |
+|-----|---------|
+| `docs/PROGRESS.md` | Session journal — what was done, decisions made, what's next |
+| `docs/superpowers/specs/` | Design specs |
+| `docs/superpowers/plans/` | Implementation plans |
+
+Session hooks auto-load these on startup. See `.claude/settings.json`.
 
 ---
 
@@ -70,6 +79,9 @@ npm test          # Vitest
 npx wrangler dev  # Local backend
 npx wrangler deploy  # Deploy backend
 ```
+
+### Custom Skills
+- `/deploy` — Lint, test, build, deploy worker + push to GitHub in one command. See `.claude/skills/deploy/SKILL.md`.
 
 ---
 
