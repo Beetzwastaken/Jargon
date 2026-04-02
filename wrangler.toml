@@ -7,7 +7,7 @@ tag = "v1"
 new_sqlite_classes = [ "BingoRoom", "DashboardAnalytics" ]
 
 [vars]
-CORS_ORIGIN = "https://corporate-bingo-ai.netlify.app"
+CORS_ORIGIN = "https://playjargon.com"
 
 [[durable_objects.bindings]]
 name = "ROOMS"
@@ -21,7 +21,7 @@ class_name = "DashboardAnalytics"
 command = ""
 
 [env.production]
-vars = { CORS_ORIGIN = "https://corporate-bingo-ai.netlify.app" }
+vars = { CORS_ORIGIN = "https://playjargon.com" }
 
 [env.development]  
 vars = { CORS_ORIGIN = "http://localhost:8080" }

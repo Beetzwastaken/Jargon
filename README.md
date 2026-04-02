@@ -10,7 +10,7 @@ Buzzword bingo you play during real work meetings. Open the app, get a card of c
 
 ## Play
 
-https://corporate-bingo-ai.netlify.app *(temporary URL — custom domain coming soon)*
+https://playjargon.com
 
 Works best on your phone during meetings. No app install needed — it's a PWA.
 

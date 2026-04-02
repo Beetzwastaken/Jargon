@@ -48,7 +48,7 @@ export function generateEmojiGrid(options: ShareOptions): string {
   }
 
   // Add footer
-  const footer = '\nPlay at: https://corporate-bingo-ai.netlify.app';
+  const footer = '\nPlay at: https://playjargon.com';
 
   return header + grid + footer;
 }
@@ -92,5 +92,5 @@ export function generateShareText(options: ShareOptions): string {
   const { score = 0 } = options;
   const markedCount = options.markedSquares.filter(Boolean).length;
 
-  return `🎯 I got BINGO in Jargon! ${markedCount}/25 squares, ${score} points!\n\nSurvived another meeting full of buzzwords 😅\n\nPlay at: https://corporate-bingo-ai.netlify.app`;
+  return `🎯 I got BINGO in Jargon! ${markedCount}/25 squares, ${score} points!\n\nSurvived another meeting full of buzzwords 😅\n\nPlay at: https://playjargon.com`;
 }

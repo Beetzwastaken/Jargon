@@ -29,7 +29,7 @@ describe('shareUtils', () => {
       expect(result).toContain('🟨🟨🟨🟨🟨');
 
       // Check footer
-      expect(result).toContain('Play at: https://corporate-bingo-ai.netlify.app');
+      expect(result).toContain('Play at: https://playjargon.com');
     });
 
     it('should differentiate between marked and winning squares', () => {
@@ -196,7 +196,7 @@ describe('shareUtils', () => {
       expect(result).toContain('🎯 I got BINGO in Jargon!');
       expect(result).toContain('15/25 squares');
       expect(result).toContain('200 points');
-      expect(result).toContain('Play at: https://corporate-bingo-ai.netlify.app');
+      expect(result).toContain('Play at: https://playjargon.com');
     });
 
     it('should handle zero score and squares', () => {

@@ -89,7 +89,7 @@ export function BingoModal({
       shareText += `${myName}: ${myScore} pts\n`;
       shareText += `${partnerName}: ${partnerScore} pts\n\n`;
       shareText += `Winner: ${winner} 🏆\n\n`;
-      shareText += `Play at: https://corporate-bingo-ai.netlify.app`;
+      shareText += `Play at: https://playjargon.com`;
     } else {
       shareText = generateEmojiGrid({
         board,
