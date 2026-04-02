@@ -1,111 +1,77 @@
 // Jargon Service Worker
-// Provides offline capability and faster loading
+// Network-first strategy — cache is only a fallback for offline
 
-const CACHE_NAME = 'jargon-v2.0.0';
-const ASSETS_TO_CACHE = [
+const CACHE_VERSION = 3;
+const CACHE_NAME = `jargon-v${CACHE_VERSION}`;
+
+// Only cache the app shell — Vite handles asset hashing
+const SHELL_ASSETS = [
   '/',
   '/index.html',
   '/logo.svg',
   '/manifest.json'
 ];
 
-// Install event - cache essential assets
+// Install — cache shell, skip waiting immediately
 self.addEventListener('install', (event) => {
-  console.log('[Service Worker] Installing...');
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('[Service Worker] Caching essential assets');
-        return cache.addAll(ASSETS_TO_CACHE);
-      })
-      .then(() => {
-        console.log('[Service Worker] Installed successfully');
-        return self.skipWaiting(); // Activate immediately
-      })
-      .catch((error) => {
-        console.error('[Service Worker] Installation failed:', error);
-      })
+      .then((cache) => cache.addAll(SHELL_ASSETS))
+      .then(() => self.skipWaiting())
   );
 });
 
-// Activate event - clean up old caches
+// Activate — delete ALL old caches, claim clients immediately
 self.addEventListener('activate', (event) => {
-  console.log('[Service Worker] Activating...');
   event.waitUntil(
     caches.keys()
-      .then((cacheNames) => {
-        return Promise.all(
-          cacheNames.map((cacheName) => {
-            if (cacheName !== CACHE_NAME) {
-              console.log('[Service Worker] Deleting old cache:', cacheName);
-              return caches.delete(cacheName);
-            }
-          })
-        );
-      })
-      .then(() => {
-        console.log('[Service Worker] Activated successfully');
-        return self.clients.claim(); // Take control immediately
-      })
+      .then((names) => Promise.all(
+        names
+          .filter((name) => name !== CACHE_NAME)
+          .map((name) => caches.delete(name))
+      ))
+      .then(() => self.clients.claim())
   );
 });
 
-// Fetch event - network first, then cache fallback
+// Fetch — network first, cache fallback for offline only
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') {
-    return;
-  }
+  if (event.request.method !== 'GET') return;
 
-  // Skip WebSocket and API requests
   const url = new URL(event.request.url);
-  if (url.protocol === 'ws:' || url.protocol === 'wss:' ||
-      url.hostname.includes('workers.dev')) {
+
+  // Never intercept API, WebSocket, or external requests
+  if (url.protocol === 'ws:' || url.protocol === 'wss:') return;
+  if (url.pathname.startsWith('/api/')) return;
+  if (url.hostname !== self.location.hostname) return;
+
+  // For HTML navigation — always go to network, fallback to cached index
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .catch(() => caches.match('/index.html'))
+    );
     return;
   }
 
+  // For assets — network first, cache fallback
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Clone the response before caching
-        const responseToCache = response.clone();
-
-        // Cache successful responses
-        if (response.status === 200) {
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
+        // Only cache successful same-origin responses
+        if (response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
         }
-
         return response;
       })
-      .catch(() => {
-        // Network failed, try cache
-        return caches.match(event.request)
-          .then((cachedResponse) => {
-            if (cachedResponse) {
-              console.log('[Service Worker] Serving from cache:', event.request.url);
-              return cachedResponse;
-            }
-
-            // No cache available, return offline page or error
-            if (event.request.destination === 'document') {
-              return caches.match('/index.html');
-            }
-
-            return new Response('Network error', {
-              status: 408,
-              headers: { 'Content-Type': 'text/plain' }
-            });
-          });
-      })
+      .catch(() => caches.match(event.request))
   );
 });
 
-// Handle messages from the client
+// Allow client to force update
 self.addEventListener('message', (event) => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    console.log('[Service Worker] Received SKIP_WAITING message');
+  if (event.data?.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
 });
