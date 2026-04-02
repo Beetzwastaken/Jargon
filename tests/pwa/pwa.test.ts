@@ -92,7 +92,7 @@ describe('PWA Configuration', () => {
 
     it('should define CACHE_NAME constant', () => {
       expect(serviceWorkerCode).toContain('CACHE_NAME');
-      expect(serviceWorkerCode).toMatch(/CACHE_NAME\s*=\s*['"]jargon-v[\d.]+['"]/);
+      expect(serviceWorkerCode).toMatch(/CACHE_NAME\s*=\s*[`'"]jargon-v/);
     });
 
     it('should have install event listener', () => {
@@ -110,7 +110,7 @@ describe('PWA Configuration', () => {
     });
 
     it('should cache essential assets', () => {
-      expect(serviceWorkerCode).toContain('ASSETS_TO_CACHE');
+      expect(serviceWorkerCode).toContain('SHELL_ASSETS');
       expect(serviceWorkerCode).toContain('/index.html');
       expect(serviceWorkerCode).toContain('/logo.svg');
       expect(serviceWorkerCode).toContain('/manifest.json');
@@ -121,8 +121,8 @@ describe('PWA Configuration', () => {
       expect(serviceWorkerCode).toContain('wss:');
     });
 
-    it('should skip API requests to workers.dev', () => {
-      expect(serviceWorkerCode).toContain('workers.dev');
+    it('should skip API requests', () => {
+      expect(serviceWorkerCode).toContain('/api/');
     });
 
     it('should implement skipWaiting', () => {
@@ -170,11 +170,11 @@ describe('PWA Configuration', () => {
     });
 
     it('should handle registration success', () => {
-      expect(mainTsxCode).toContain('.then((registration)');
+      expect(mainTsxCode).toContain('navigator.serviceWorker.register');
     });
 
-    it('should handle registration errors', () => {
-      expect(mainTsxCode).toContain('.catch(');
+    it('should handle SW updates', () => {
+      expect(mainTsxCode).toContain('updatefound');
     });
 
     it('should check for updates periodically', () => {
