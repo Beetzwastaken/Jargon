@@ -5,26 +5,24 @@ import { getLineIndices } from '../../lib/dailyCard';
 
 interface LineSelectorProps {
   onSelect: (line: LineSelection) => void;
-  takenLine?: LineSelection | null;
   selectedLine?: LineSelection | null;
+  isMyTurn: boolean;
+  partnerHasSelected: boolean;
   disabled?: boolean;
 }
 
 // All 12 possible lines
 const ALL_LINES: LineSelection[] = [
-  // Rows (0-4)
   { type: 'row', index: 0 },
   { type: 'row', index: 1 },
   { type: 'row', index: 2 },
   { type: 'row', index: 3 },
   { type: 'row', index: 4 },
-  // Columns (0-4)
   { type: 'col', index: 0 },
   { type: 'col', index: 1 },
   { type: 'col', index: 2 },
   { type: 'col', index: 3 },
   { type: 'col', index: 4 },
-  // Diagonals (0-1)
   { type: 'diag', index: 0 },
   { type: 'diag', index: 1 }
 ];
@@ -47,22 +45,22 @@ function getLineName(line: LineSelection): string {
 
 export function LineSelector({
   onSelect,
-  takenLine,
   selectedLine,
+  isMyTurn,
+  partnerHasSelected,
   disabled = false
 }: LineSelectorProps) {
   const [hoveredLine, setHoveredLine] = useState<LineSelection | null>(null);
 
+  const canPick = isMyTurn && !selectedLine;
+
   // Get indices that should be highlighted
   const highlightedIndices = hoveredLine ? getLineIndices(hoveredLine) : [];
   const selectedIndices = selectedLine ? getLineIndices(selectedLine) : [];
-  const takenIndices = takenLine ? getLineIndices(takenLine) : [];
 
   const handleLineClick = (line: LineSelection) => {
-    if (disabled) return;
-    if (lineEquals(line, takenLine)) return; // Can't select taken line
-    if (lineEquals(line, selectedLine)) return; // Already selected
-
+    if (!canPick || disabled) return;
+    if (lineEquals(line, selectedLine)) return;
     onSelect(line);
   };
 
@@ -70,7 +68,6 @@ export function LineSelector({
   const renderCell = (index: number) => {
     const isHighlighted = highlightedIndices.includes(index);
     const isSelected = selectedIndices.includes(index);
-    const isTaken = takenIndices.includes(index);
 
     return (
       <div
@@ -79,8 +76,6 @@ export function LineSelector({
           aspect-square rounded-lg border-2 transition-all duration-150
           ${isSelected
             ? 'bg-cyan-500/30 border-cyan-500'
-            : isTaken
-            ? 'bg-red-500/20 border-red-500/50'
             : isHighlighted
             ? 'bg-cyan-500/20 border-cyan-500/50'
             : 'bg-apple-darkest border-apple-border'
@@ -92,7 +87,6 @@ export function LineSelector({
 
   // Render line selector button
   const renderLineButton = (line: LineSelection) => {
-    const isTaken = lineEquals(line, takenLine);
     const isSelected = lineEquals(line, selectedLine);
     const isHovered = lineEquals(line, hoveredLine);
 
@@ -100,25 +94,59 @@ export function LineSelector({
       <button
         key={`${line.type}-${line.index}`}
         onClick={() => handleLineClick(line)}
-        onMouseEnter={() => setHoveredLine(line)}
+        onMouseEnter={() => canPick ? setHoveredLine(line) : null}
         onMouseLeave={() => setHoveredLine(null)}
-        disabled={disabled || isTaken}
+        disabled={!canPick || disabled}
         className={`
           px-3 py-2 rounded-lg text-sm font-medium transition-all
           ${isSelected
             ? 'bg-cyan-500 text-white'
-            : isTaken
-            ? 'bg-red-900/30 text-red-400 cursor-not-allowed line-through'
             : isHovered
             ? 'bg-cyan-500/20 text-cyan-400'
             : 'bg-apple-darkest text-apple-secondary hover:bg-apple-hover hover:text-apple-text'
           }
-          ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+          ${(!canPick || disabled) ? 'opacity-50 cursor-not-allowed' : ''}
         `}
       >
         {getLineName(line)}
-        {isTaken && ' (Taken)'}
       </button>
+    );
+  };
+
+  // Status message
+  const getStatusMessage = () => {
+    if (selectedLine) {
+      if (partnerHasSelected) {
+        return null; // Both selected, transitioning
+      }
+      return (
+        <div className="text-center p-4 bg-cyan-500/10 rounded-lg border border-cyan-500/30">
+          <p className="text-cyan-400 font-medium">
+            You selected: {getLineName(selectedLine)}
+          </p>
+          <p className="text-apple-secondary text-sm mt-1">
+            Waiting for partner...
+          </p>
+        </div>
+      );
+    }
+
+    if (!isMyTurn) {
+      return (
+        <div className="text-center p-4 bg-amber-500/10 rounded-lg border border-amber-500/30">
+          <p className="text-amber-400 text-sm">
+            Waiting for partner to pick first...
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="text-center p-4 bg-green-500/10 rounded-lg border border-green-500/30">
+        <p className="text-green-400 font-medium">
+          Your turn to pick!
+        </p>
+      </div>
     );
   };
 
@@ -130,7 +158,7 @@ export function LineSelector({
           Pick Your Line
         </h2>
         <p className="text-apple-secondary text-sm">
-          Choose a row, column, or diagonal. Score points when squares in your line are marked.
+          Choose a row, column, or diagonal. Your opponent scores when they mark squares in YOUR line.
         </p>
       </div>
 
@@ -143,7 +171,6 @@ export function LineSelector({
 
       {/* Line Selection Buttons */}
       <div className="space-y-4">
-        {/* Rows */}
         <div>
           <h3 className="text-xs font-medium text-apple-secondary uppercase tracking-wider mb-2">
             Rows
@@ -153,7 +180,6 @@ export function LineSelector({
           </div>
         </div>
 
-        {/* Columns */}
         <div>
           <h3 className="text-xs font-medium text-apple-secondary uppercase tracking-wider mb-2">
             Columns
@@ -163,7 +189,6 @@ export function LineSelector({
           </div>
         </div>
 
-        {/* Diagonals */}
         <div>
           <h3 className="text-xs font-medium text-apple-secondary uppercase tracking-wider mb-2">
             Diagonals
@@ -174,25 +199,8 @@ export function LineSelector({
         </div>
       </div>
 
-      {/* Selection Status */}
-      {selectedLine && (
-        <div className="text-center p-4 bg-cyan-500/10 rounded-lg border border-cyan-500/30">
-          <p className="text-cyan-400 font-medium">
-            ✓ You selected: {getLineName(selectedLine)}
-          </p>
-          <p className="text-apple-secondary text-sm mt-1">
-            Waiting for partner to pick...
-          </p>
-        </div>
-      )}
-
-      {takenLine && !selectedLine && (
-        <div className="text-center p-4 bg-amber-500/10 rounded-lg border border-amber-500/30">
-          <p className="text-amber-400 text-sm">
-            Partner already picked {getLineName(takenLine)}. Choose a different line.
-          </p>
-        </div>
-      )}
+      {/* Status */}
+      {getStatusMessage()}
     </div>
   );
 }

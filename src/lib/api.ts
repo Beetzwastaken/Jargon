@@ -15,7 +15,6 @@ export interface DuoCreateResponse {
   code: string;
   playerId: string;
   playerName: string;
-  timezone: string;
   dailySeed: string;
 }
 
@@ -24,8 +23,7 @@ export interface DuoJoinResponse {
   playerId: string;
   playerName: string;
   partnerName: string;
-  phase: 'waiting' | 'selecting' | 'playing';
-  timezone: string;
+  phase: 'waiting' | 'selecting' | 'playing' | 'finished';
   dailySeed: string;
   isHost: boolean;
 }
@@ -33,17 +31,28 @@ export interface DuoJoinResponse {
 export interface DuoSelectResponse {
   success: boolean;
   waiting?: boolean;
-  conflict?: boolean;
   phase?: string;
-  hostLine?: LineSelection;
-  partnerLine?: LineSelection;
-  message?: string;
+  error?: string;
 }
 
 export interface DuoMarkResponse {
   success: boolean;
-  hostScore: number;
+  hit: boolean;
+  myScore: number;
   partnerScore: number;
+  gameOver: boolean;
+  unmarked?: boolean;
+}
+
+export interface DuoSnapshotResponse {
+  success: boolean;
+  date: string;
+  myLine: LineSelection | null;
+  partnerLine: LineSelection | null;
+  marks: Array<{ index: number; markedBy: string }>;
+  myScore: number;
+  partnerScore: number;
+  winner: string | null;
 }
 
 // Generic API request handler
@@ -126,6 +135,15 @@ export async function leaveDuoGame(roomCode: string, playerId: string): Promise<
     headers: {
       'X-Player-ID': playerId
     },
+  });
+}
+
+// Fetch yesterday's snapshot
+export async function fetchSnapshot(roomCode: string, playerId: string): Promise<ApiResponse<DuoSnapshotResponse>> {
+  return apiRequest<DuoSnapshotResponse>(`/api/duo/${roomCode}/snapshot`, {
+    headers: {
+      'X-Player-ID': playerId
+    }
   });
 }
 

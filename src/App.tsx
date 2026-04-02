@@ -1,6 +1,6 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
 import { BingoCard } from './components/bingo/BingoCard';
-import { BingoModal } from './components/bingo/BingoModal';
+import { GameOverScreen } from './components/bingo/GameOverScreen';
 import { WelcomeTutorial } from './components/shared/WelcomeTutorial';
 import { DuoScoreboard } from './components/bingo/DuoScoreboard';
 import { LineSelector } from './components/bingo/LineSelector';
@@ -8,7 +8,6 @@ import { ModeSelector } from './components/ModeSelector';
 import { SoloGame } from './components/SoloGame';
 import { useDuoStore, regenerateDailyCardIfNeeded } from './stores/duoStore';
 import { useConnectionStore } from './stores/connectionStore';
-import { countMarkedInLine } from './lib/dailyCard';
 import { APP_VERSION } from './utils/version';
 import { ToastContainer, showGameToast } from './components/shared/ToastNotification';
 import './App.css';
@@ -26,32 +25,31 @@ function ComponentLoader() {
 
 function App() {
   const [mode, setMode] = useState<null | 'solo' | 'duo'>(null);
-  const [joinCode, setJoinCode] = useState<string | null>(null);
+  const [, setJoinCode] = useState<string | null>(null);
   const [showTutorial, setShowTutorial] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showBingoModal, setShowBingoModal] = useState(false);
-  const [lastBingoState, setLastBingoState] = useState({ myBingo: false, partnerBingo: false });
 
   // Duo store state
   const {
     phase,
     pairCode,
+    odId,
     odName,
     partnerName,
     isPaired,
     myLine,
-    partnerLine,
     dailyCard,
-    markedSquares,
+    marks,
     myScore,
     partnerScore,
-    myBingo,
-    partnerBingo,
+    isMyTurnToPick,
+    partnerHasSelected,
     selectLine,
     markSquare,
     leaveGame,
     getMyLineIndices,
-    getPartnerLineIndices
+    getPartnerLineIndices,
+    loadSnapshot,
   } = useDuoStore();
 
   // Connection state
@@ -71,24 +69,11 @@ function App() {
   useEffect(() => {
     if (mode === 'duo') {
       regenerateDailyCardIfNeeded();
+      // Load snapshot for yesterday's results
+      loadSnapshot();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode]);
-
-  // Watch for bingo events
-  useEffect(() => {
-    // Check if new bingo occurred
-    if ((myBingo && !lastBingoState.myBingo) || (partnerBingo && !lastBingoState.partnerBingo)) {
-      setShowBingoModal(true);
-      setLastBingoState({ myBingo, partnerBingo });
-
-      // Show toast
-      if (myBingo && !lastBingoState.myBingo) {
-        showGameToast('BINGO!', 'You completed your line!', 'success');
-      } else if (partnerBingo && !lastBingoState.partnerBingo) {
-        showGameToast('Partner BINGO!', `${partnerName} completed their line!`, 'success');
-      }
-    }
-  }, [myBingo, partnerBingo, lastBingoState, partnerName]);
 
   // Check for first visit
   useEffect(() => {
@@ -105,9 +90,6 @@ function App() {
 
   const handleModeSelect = (selectedMode: 'solo' | 'duo') => {
     setMode(selectedMode);
-    if (selectedMode === 'duo' && joinCode) {
-      // If join code exists, it will be handled in RoomManager
-    }
   };
 
   const handleBackToModeSelect = () => {
@@ -115,21 +97,17 @@ function App() {
     setJoinCode(null);
   };
 
-  const handleSquareClick = async (squareId: string) => {
+  const handleSquareClick = async (index: number) => {
     if (phase !== 'playing') return;
-
-    const squareIndex = parseInt(squareId.split('-')[1]);
-    if (markedSquares[squareIndex]) return;
-
-    await markSquare(squareIndex);
+    await markSquare(index);
   };
 
   const handleLineSelect = async (line: { type: 'row' | 'col' | 'diag'; index: number }) => {
     const result = await selectLine(line);
-    if (result.taken) {
-      showGameToast('Line Taken', 'Your partner already picked that line. Choose another.', 'error');
-    } else if (result.success) {
-      showGameToast('Line Selected', 'Waiting for partner to pick...', 'success');
+    if (result.success) {
+      showGameToast('Line Selected', 'Waiting for partner...', 'success');
+    } else if (result.error) {
+      showGameToast('Error', result.error, 'error');
     }
   };
 
@@ -148,19 +126,8 @@ function App() {
     setSidebarOpen(false);
   };
 
-  // Determine bingo modal winner
-  const getBingoWinner = (): 'me' | 'partner' | 'both' | undefined => {
-    if (myBingo && partnerBingo) return 'both';
-    if (myBingo) return 'me';
-    if (partnerBingo) return 'partner';
-    return undefined;
-  };
-
-  // Convert dailyCard to format BingoCard expects
-  const boardSquares = dailyCard.map((square, index) => ({
-    ...square,
-    isMarked: markedSquares[index] || false
-  }));
+  // Convert dailyCard for BingoCard (keep isMarked false; marks array is source of truth)
+  const boardSquares = dailyCard;
 
   // Show mode selector if no mode selected
   if (!mode) {
@@ -172,7 +139,7 @@ function App() {
     return <SoloGame onBack={handleBackToModeSelect} />;
   }
 
-  // Render duo mode (original logic)
+  // Render duo mode
   return (
     <div className="h-screen bg-black text-white font-system flex flex-col overflow-hidden">
       {/* Header */}
@@ -333,7 +300,8 @@ function App() {
                 <LineSelector
                   onSelect={handleLineSelect}
                   selectedLine={myLine}
-                  takenLine={partnerLine}
+                  isMyTurn={isMyTurnToPick}
+                  partnerHasSelected={partnerHasSelected}
                   disabled={!!myLine}
                 />
 
@@ -351,13 +319,8 @@ function App() {
                 {/* Today's Card header */}
                 <div className="text-center mb-4">
                   <p className="text-sm text-apple-tertiary">
-                    Today's Card • {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    Today's Card
                   </p>
-                  {myLine && (
-                    <p className="text-xs text-cyan-400 mt-1">
-                      Your line: {countMarkedInLine(markedSquares, myLine)}/5
-                    </p>
-                  )}
                 </div>
 
                 {/* Duo Scoreboard */}
@@ -369,13 +332,32 @@ function App() {
                 <BingoCard
                   squares={boardSquares}
                   onSquareClick={handleSquareClick}
-                  hasBingo={myBingo || partnerBingo}
-                  isDuoMode={true}
+                  myPlayerId={odId || ''}
+                  marks={marks}
                   myLineIndices={getMyLineIndices()}
-                  partnerLineIndices={getPartnerLineIndices()}
-                  myScore={myScore}
-                  partnerScore={partnerScore}
+                  phase="playing"
                 />
+              </>
+            )}
+
+            {/* Phase: Finished - Show GameOverScreen + Card */}
+            {phase === 'finished' && (
+              <>
+                <GameOverScreen />
+
+                {dailyCard.length > 0 && (
+                  <div className="mt-8">
+                    <BingoCard
+                      squares={boardSquares}
+                      onSquareClick={() => {}} // no-op in finished
+                      myPlayerId={odId || ''}
+                      marks={marks}
+                      myLineIndices={getMyLineIndices()}
+                      phase="finished"
+                      partnerLineIndices={getPartnerLineIndices()}
+                    />
+                  </div>
+                )}
               </>
             )}
           </div>
@@ -401,12 +383,12 @@ function App() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-cyan-400">{odName || 'You'}</span>
-                    <span className="text-cyan-400 font-bold">{myScore} pts</span>
+                    <span className="text-cyan-400 font-bold">{myScore}/5</span>
                   </div>
                   {partnerName && (
                     <div className="flex items-center justify-between">
                       <span className="text-orange-400">{partnerName}</span>
-                      <span className="text-orange-400 font-bold">{partnerScore} pts</span>
+                      <span className="text-orange-400 font-bold">{partnerScore}/5</span>
                     </div>
                   )}
                 </div>
@@ -416,9 +398,9 @@ function App() {
               <div className="apple-panel p-4">
                 <h3 className="text-sm font-medium text-apple-secondary mb-3">Scoring</h3>
                 <ul className="text-xs text-apple-tertiary space-y-1">
-                  <li>+1 point per square in your line</li>
-                  <li>+5 bonus for completing your line (BINGO)</li>
-                  <li>New card at midnight in your timezone</li>
+                  <li>Your score = opponent's line squares you marked</li>
+                  <li>5/5 = BINGO (early win)</li>
+                  <li>New card at UTC midnight</li>
                 </ul>
               </div>
 
@@ -436,23 +418,6 @@ function App() {
           </aside>
         )}
       </div>
-
-      {/* BINGO Modal */}
-      <BingoModal
-        show={showBingoModal}
-        onBingo={() => setShowBingoModal(false)}
-        onCancel={() => setShowBingoModal(false)}
-        board={dailyCard}
-        markedSquares={markedSquares}
-        score={myScore}
-        gamesPlayed={1}
-        isDuoMode={true}
-        duoWinner={getBingoWinner()}
-        myName={odName || 'You'}
-        partnerName={partnerName || 'Partner'}
-        myScore={myScore}
-        partnerScore={partnerScore}
-      />
 
       {/* Toast Notifications */}
       <ToastContainer />

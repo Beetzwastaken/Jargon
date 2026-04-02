@@ -36,8 +36,7 @@ export function SoloGame({ onBack }: SoloGameProps) {
     }
   }, [hasBingo]);
 
-  const handleSquareClick = (squareId: string) => {
-    const index = parseInt(squareId.split('-')[1]);
+  const handleSquareClick = (index: number) => {
     markSquare(index);
   };
 
@@ -121,8 +120,11 @@ export function SoloGame({ onBack }: SoloGameProps) {
                 <BingoCard
                   squares={boardSquares}
                   onSquareClick={handleSquareClick}
+                  myPlayerId="solo"
+                  marks={markedSquares.map((marked, i) => marked ? { index: i, markedBy: 'solo' } : null).filter((m): m is { index: number; markedBy: string } => m !== null)}
+                  myLineIndices={[]}
+                  phase="playing"
                   hasBingo={hasBingo}
-                  isDuoMode={false}
                 />
 
                 {/* Instructions */}

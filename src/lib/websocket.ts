@@ -9,33 +9,23 @@ export interface DuoWebSocketMessage {
   // Partner joined
   partnerId?: string;
   partnerName?: string;
-  // Partner selected (no line revealed yet)
-  playerId?: string;
-  // Line conflict
-  takenLine?: { type: 'row' | 'col' | 'diag'; index: number };
-  message?: string;
-  // Card revealed
-  hostLine?: { type: 'row' | 'col' | 'diag'; index: number };
-  partnerLine?: { type: 'row' | 'col' | 'diag'; index: number };
-  card?: string[];
-  // Square marked
+  // Square marked/unmarked
   index?: number;
   markedBy?: string;
   hostScore?: number;
   partnerScore?: number;
-  hostBingo?: boolean;
-  partnerBingo?: boolean;
-  // Bingo
-  player?: 'host' | 'partner';
-  playerName?: string;
-  score?: number;
+  // Game over
+  winner?: string;
+  hostLine?: { type: 'row' | 'col' | 'diag'; index: number };
+  partnerLine?: { type: 'row' | 'col' | 'diag'; index: number };
   // Daily reset
-  dailySeed?: string;
+  newSeed?: string;
   // Connection state
   phase?: string;
   isHost?: boolean;
   hostName?: string;
   isPaired?: boolean;
+  isMyTurnToPick?: boolean;
 }
 
 interface ConnectionOptions {
@@ -230,13 +220,13 @@ export const DUO_MESSAGE_TYPES = {
   PARTNER_LEFT: 'partner_left',
 
   // Line selection
-  PARTNER_SELECTED: 'partner_selected',
-  LINE_CONFLICT: 'line_conflict',
-  CARD_REVEALED: 'card_revealed',
+  YOUR_TURN_TO_PICK: 'your_turn_to_pick',
+  BOTH_SELECTED: 'both_selected',
 
   // Gameplay
   SQUARE_MARKED: 'square_marked',
-  BINGO: 'bingo',
+  SQUARE_UNMARKED: 'square_unmarked',
+  GAME_OVER: 'game_over',
 
   // Daily
   DAILY_RESET: 'daily_reset'

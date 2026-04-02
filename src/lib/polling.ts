@@ -6,25 +6,23 @@ import type { LineSelection } from '../stores/duoStore';
 
 export interface DuoStateUpdate {
   code: string;
-  phase: 'waiting' | 'selecting' | 'playing';
-  timezone: string;
+  phase: 'waiting' | 'selecting' | 'playing' | 'finished';
   dailySeed: string;
   isHost: boolean;
   hostName: string;
   partnerName: string | null;
   isPaired: boolean;
   // Selection phase
-  myHasSelected?: boolean;
+  isMyTurnToPick?: boolean;
   partnerHasSelected?: boolean;
   myLine?: LineSelection;
-  // Playing phase
-  hostLine?: LineSelection;
-  partnerLine?: LineSelection;
-  markedSquares?: boolean[];
-  hostScore?: number;
+  // Playing/finished phase
+  marks?: Array<{ index: number; markedBy: string }>;
+  myScore?: number;
   partnerScore?: number;
-  hostBingo?: boolean;
-  partnerBingo?: boolean;
+  // Finished phase only
+  winner?: string;
+  partnerLine?: LineSelection;
   card?: string[];
 }
 

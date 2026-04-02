@@ -6,7 +6,7 @@ import type { DuoWebSocketMessage } from '../lib/websocket';
 import { BingoPollingClient } from '../lib/polling';
 import type { DuoStateUpdate } from '../lib/polling';
 import { useDuoStore } from './duoStore';
-import type { BingoSquare } from '../types';
+import { generateDailyCard } from '../lib/dailyCard';
 
 interface ConnectionStore {
   // State
@@ -144,6 +144,10 @@ function handleWebSocketMessage(message: DuoWebSocketMessage): void {
 
   switch (message.type) {
     case DUO_MESSAGE_TYPES.CONNECTED:
+      // Set turn info if present
+      if (typeof message.isMyTurnToPick === 'boolean') {
+        useDuoStore.setState({ isMyTurnToPick: message.isMyTurnToPick });
+      }
       break;
 
     case DUO_MESSAGE_TYPES.PARTNER_JOINED:
@@ -156,108 +160,50 @@ function handleWebSocketMessage(message: DuoWebSocketMessage): void {
       break;
 
     case DUO_MESSAGE_TYPES.PARTNER_LEFT:
-      // Reset to waiting state
-      useDuoStore.setState({
-        partnerId: null,
-        partnerName: null,
-        isPaired: false,
-        phase: 'waiting',
-        partnerLine: null,
-        partnerHasSelected: false,
-        myLine: null,
-        markedSquares: Array(25).fill(false),
-        myScore: 0,
-        partnerScore: 0,
-        myBingo: false,
-        partnerBingo: false
-      });
+      duoStore.handlePartnerLeft();
       break;
 
-    case DUO_MESSAGE_TYPES.PARTNER_SELECTED:
-      duoStore.handlePartnerSelected();
+    case DUO_MESSAGE_TYPES.YOUR_TURN_TO_PICK:
+      duoStore.handleYourTurnToPick();
       break;
 
-    case DUO_MESSAGE_TYPES.LINE_CONFLICT:
-      if (message.takenLine) {
-        // Reset own selection and show taken line
-        useDuoStore.setState({
-          myLine: null,
-          partnerLine: message.takenLine,
-          partnerHasSelected: true
-        });
-      }
-      break;
-
-    case DUO_MESSAGE_TYPES.CARD_REVEALED:
-      if (message.hostLine && message.partnerLine && message.card) {
-        const duoState = useDuoStore.getState();
-        const isHost = duoState.isHost;
-
-        // Map host/partner lines to my/partner
-        const myLine = isHost ? message.hostLine : message.partnerLine;
-        const theirLine = isHost ? message.partnerLine : message.hostLine;
-
-        // Generate card from phrases
-        const card: BingoSquare[] = message.card.map((text, index) => ({
-          id: `square-${index}`,
-          text,
-          isMarked: false
-        }));
-
-        useDuoStore.setState({
-          myLine,
-          partnerLine: theirLine,
-          dailyCard: card,
-          phase: 'playing',
-          myScore: 0,
-          partnerScore: 0
-        });
-      }
+    case DUO_MESSAGE_TYPES.BOTH_SELECTED:
+      duoStore.handleBothSelected();
       break;
 
     case DUO_MESSAGE_TYPES.SQUARE_MARKED:
-      if (typeof message.index === 'number') {
-        const duoState = useDuoStore.getState();
-        const isHost = duoState.isHost;
-
-        // Update marked squares
-        const newMarked = [...duoState.markedSquares];
-        newMarked[message.index] = true;
-
-        // Map scores based on host/partner role
-        const myScore = isHost ? (message.hostScore ?? duoState.myScore) : (message.partnerScore ?? duoState.myScore);
-        const partnerScore = isHost ? (message.partnerScore ?? duoState.partnerScore) : (message.hostScore ?? duoState.partnerScore);
-        const myBingo = isHost ? (message.hostBingo ?? duoState.myBingo) : (message.partnerBingo ?? duoState.myBingo);
-        const partnerBingo = isHost ? (message.partnerBingo ?? duoState.partnerBingo) : (message.hostBingo ?? duoState.partnerBingo);
-
-        useDuoStore.setState({
-          markedSquares: newMarked,
-          myScore,
-          partnerScore,
-          myBingo,
-          partnerBingo
-        });
+      if (typeof message.index === 'number' && message.markedBy) {
+        const ds = useDuoStore.getState();
+        const isHost = ds.isHost;
+        const myScore = isHost ? (message.hostScore ?? ds.myScore) : (message.partnerScore ?? ds.myScore);
+        const partnerScore = isHost ? (message.partnerScore ?? ds.partnerScore) : (message.hostScore ?? ds.partnerScore);
+        duoStore.handleSquareMarked(message.index, message.markedBy, myScore, partnerScore);
       }
       break;
 
-    case DUO_MESSAGE_TYPES.BINGO:
-      if (message.player && message.playerName) {
-        const duoState = useDuoStore.getState();
-        const isHost = duoState.isHost;
-        const isMine = (message.player === 'host' && isHost) || (message.player === 'partner' && !isHost);
+    case DUO_MESSAGE_TYPES.SQUARE_UNMARKED:
+      if (typeof message.index === 'number') {
+        const ds = useDuoStore.getState();
+        const isHost = ds.isHost;
+        const myScore = isHost ? (message.hostScore ?? ds.myScore) : (message.partnerScore ?? ds.myScore);
+        const partnerScore = isHost ? (message.partnerScore ?? ds.partnerScore) : (message.hostScore ?? ds.partnerScore);
+        duoStore.handleSquareUnmarked(message.index, myScore, partnerScore);
+      }
+      break;
 
-        if (isMine) {
-          useDuoStore.setState({ myBingo: true });
-        } else {
-          useDuoStore.setState({ partnerBingo: true });
-        }
-
+    case DUO_MESSAGE_TYPES.GAME_OVER:
+      if (message.winner && message.hostLine && message.partnerLine) {
+        const ds = useDuoStore.getState();
+        const isHost = ds.isHost;
+        const myScore = isHost ? (message.hostScore ?? ds.myScore) : (message.partnerScore ?? ds.myScore);
+        const partnerScore = isHost ? (message.partnerScore ?? ds.partnerScore) : (message.hostScore ?? ds.partnerScore);
+        duoStore.handleGameOver(message.winner, myScore, partnerScore, message.hostLine, message.partnerLine);
       }
       break;
 
     case DUO_MESSAGE_TYPES.DAILY_RESET:
-      if (message.dailySeed) {
-        duoStore.handleDailyReset();
+      if (message.newSeed) {
+        duoStore.handleDailyReset(message.newSeed);
       }
       break;
 
@@ -279,61 +225,77 @@ function handlePollingUpdate(state: DuoStateUpdate): void {
 
   // Update phase
   if (state.phase !== duoState.phase) {
-    useDuoStore.setState({ phase: state.phase as 'unpaired' | 'waiting' | 'selecting' | 'playing' });
+    const updates: Record<string, unknown> = { phase: state.phase };
+
+    // If transitioning to playing, generate card
+    if (state.phase === 'playing' && duoState.dailyCard.length === 0) {
+      const seed = state.dailySeed || duoState.dailySeed;
+      if (seed) {
+        updates.dailyCard = generateDailyCard(seed);
+      }
+    }
+
+    useDuoStore.setState(updates);
   }
 
   // Update selection state
   if (state.phase === 'selecting') {
-    const partnerHasSelected = state.isHost
-      ? state.partnerHasSelected
-      : state.myHasSelected; // Flip perspective
-
     useDuoStore.setState({
-      partnerHasSelected: partnerHasSelected ?? false
+      isMyTurnToPick: state.isMyTurnToPick ?? false,
+      partnerHasSelected: state.partnerHasSelected ?? false,
     });
   }
 
-  // Update playing state
-  if (state.phase === 'playing') {
-    const isHost = state.isHost;
+  // Update playing/finished state
+  if (state.phase === 'playing' || state.phase === 'finished') {
+    const updates: Record<string, unknown> = {};
 
-    // Map lines
-    const myLine = isHost ? state.hostLine : state.partnerLine;
-    const theirLine = isHost ? state.partnerLine : state.hostLine;
+    if (state.marks) {
+      updates.marks = state.marks;
+    }
+    if (typeof state.myScore === 'number') {
+      updates.myScore = state.myScore;
+    }
+    if (typeof state.partnerScore === 'number') {
+      updates.partnerScore = state.partnerScore;
+    }
+    if (state.myLine) {
+      updates.myLine = state.myLine;
+    }
 
-    // Map scores
-    const myScore = isHost ? (state.hostScore ?? 0) : (state.partnerScore ?? 0);
-    const partnerScore = isHost ? (state.partnerScore ?? 0) : (state.hostScore ?? 0);
-    const myBingo = isHost ? (state.hostBingo ?? false) : (state.partnerBingo ?? false);
-    const partnerBingo = isHost ? (state.partnerBingo ?? false) : (state.hostBingo ?? false);
+    // Finished-only fields
+    if (state.phase === 'finished') {
+      if (state.winner) {
+        const isHost = state.isHost;
+        let winnerValue: 'me' | 'partner' | 'tie' | null = null;
+        if (state.winner === 'tie') winnerValue = 'tie';
+        else if ((state.winner === 'host' && isHost) || (state.winner === 'partner' && !isHost)) winnerValue = 'me';
+        else winnerValue = 'partner';
+        updates.winner = winnerValue;
+        updates.gameOver = true;
+      }
+      if (state.partnerLine) {
+        updates.partnerLine = state.partnerLine;
+      }
+    }
 
-    // Generate card if we have it
-    let dailyCard = duoState.dailyCard;
-    if (state.card && dailyCard.length === 0) {
-      dailyCard = state.card.map((text, index) => ({
+    // Generate card if needed
+    if (state.card && duoState.dailyCard.length === 0) {
+      updates.dailyCard = state.card.map((text: string, index: number) => ({
         id: `square-${index}`,
         text,
         isMarked: false
       }));
     }
 
-    useDuoStore.setState({
-      myLine: myLine ?? null,
-      partnerLine: theirLine ?? null,
-      markedSquares: state.markedSquares ?? Array(25).fill(false),
-      myScore,
-      partnerScore,
-      myBingo,
-      partnerBingo,
-      dailyCard
-    });
+    useDuoStore.setState(updates);
   }
 
   // Check for daily reset
   if (state.dailySeed !== duoState.dailySeed) {
     useDuoStore.setState({ dailySeed: state.dailySeed });
     if (duoState.dailySeed && state.dailySeed !== duoState.dailySeed) {
-      useDuoStore.getState().handleDailyReset();
+      useDuoStore.getState().handleDailyReset(state.dailySeed);
     }
   }
 }

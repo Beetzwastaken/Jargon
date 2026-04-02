@@ -2,21 +2,21 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import type { BingoSquare } from '../types';
-import type { BingoPlayer } from '../types/shared';
 import {
   generateDailyCard,
   getTodayDateString,
   hasNewDayStarted,
   getLineIndices,
-  isLineComplete
 } from '../lib/dailyCard';
 import {
   createDuoGame,
   joinDuoGame,
   selectLine as apiSelectLine,
   markSquare as apiMarkSquare,
-  leaveDuoGame
+  leaveDuoGame,
+  fetchSnapshot,
 } from '../lib/api';
+import type { DuoSnapshotResponse } from '../lib/api';
 import { useConnectionStore } from './connectionStore';
 
 // Line selection type
@@ -25,39 +25,59 @@ export interface LineSelection {
   index: number; // 0-4 for rows/cols, 0-1 for diagonals
 }
 
+// Mark entry
+export interface MarkEntry {
+  index: number;
+  markedBy: string;
+}
+
 // Game phase
-export type DuoPhase = 'unpaired' | 'waiting' | 'selecting' | 'playing';
+export type DuoPhase = 'unpaired' | 'waiting' | 'selecting' | 'playing' | 'finished';
+
+// Yesterday snapshot
+export interface YesterdaySnapshot {
+  date: string;
+  myLine: LineSelection | null;
+  partnerLine: LineSelection | null;
+  marks: MarkEntry[];
+  myScore: number;
+  partnerScore: number;
+  winner: string | null;
+}
 
 // Duo state interface
 interface DuoState {
   // Pairing
   pairCode: string | null;
-  odId: string | null;           // Own ID
-  odName: string | null;         // Own name
+  odId: string | null;
+  odName: string | null;
   partnerId: string | null;
   partnerName: string | null;
   isPaired: boolean;
   isHost: boolean;
-  pairTimezone: string;          // IANA timezone, locked at creation
 
   // Phase
   phase: DuoPhase;
 
   // Line Selection
   myLine: LineSelection | null;
-  partnerLine: LineSelection | null;
-  partnerHasSelected: boolean;   // True if partner picked (unknown which until reveal)
+  isMyTurnToPick: boolean;
+  partnerHasSelected: boolean;
 
   // Daily Card
   dailyCard: BingoSquare[];
-  dailySeed: string;             // YYYY-MM-DD
+  dailySeed: string;
 
-  // Game State
-  markedSquares: boolean[];      // 25 booleans - shared between both players
+  // Game State - server is source of truth for scores
+  marks: MarkEntry[];
   myScore: number;
   partnerScore: number;
-  myBingo: boolean;
-  partnerBingo: boolean;
+  gameOver: boolean;
+  winner: 'me' | 'partner' | 'tie' | null;
+  partnerLine: LineSelection | null; // only in finished phase
+
+  // Snapshot
+  snapshot: YesterdaySnapshot | null;
 }
 
 // Actions interface
@@ -68,24 +88,27 @@ interface DuoActions {
   leaveGame: () => void;
 
   // Line Selection
-  selectLine: (line: LineSelection) => Promise<{ success: boolean; taken?: boolean; error?: string }>;
+  selectLine: (line: LineSelection) => Promise<{ success: boolean; error?: string }>;
 
   // Game Actions
   markSquare: (index: number) => Promise<void>;
 
-  // Sync
+  // Sync handlers
   syncState: (state: Partial<DuoState>) => void;
-  handlePartnerJoined: (partner: BingoPlayer) => void;
-  handlePartnerSelected: () => void;
-  handleCardRevealed: (myLine: LineSelection, partnerLine: LineSelection) => void;
-  handleSquareMarked: (index: number, myScore: number, partnerScore: number) => void;
-  handleBingo: (player: 'me' | 'partner', myScore: number, partnerScore: number) => void;
-  handleDailyReset: () => void;
+  handlePartnerJoined: (partner: { id: string; name: string }) => void;
+  handlePartnerLeft: () => void;
+  handleYourTurnToPick: () => void;
+  handleBothSelected: () => void;
+  handleSquareMarked: (index: number, markedBy: string, myScore: number, partnerScore: number) => void;
+  handleSquareUnmarked: (index: number, myScore: number, partnerScore: number) => void;
+  handleGameOver: (winner: string, myScore: number, partnerScore: number, hostLine: LineSelection, partnerLine: LineSelection) => void;
+  handleDailyReset: (newSeed: string) => void;
 
   // Utilities
   checkDailyReset: () => boolean;
   getMyLineIndices: () => number[];
   getPartnerLineIndices: () => number[];
+  loadSnapshot: () => Promise<void>;
 }
 
 type DuoStore = DuoState & DuoActions;
@@ -99,22 +122,24 @@ const initialState: DuoState = {
   partnerName: null,
   isPaired: false,
   isHost: false,
-  pairTimezone: 'UTC',
 
   phase: 'unpaired',
 
   myLine: null,
-  partnerLine: null,
+  isMyTurnToPick: false,
   partnerHasSelected: false,
 
   dailyCard: [],
   dailySeed: '',
 
-  markedSquares: Array(25).fill(false),
+  marks: [],
   myScore: 0,
   partnerScore: 0,
-  myBingo: false,
-  partnerBingo: false
+  gameOver: false,
+  winner: null,
+  partnerLine: null,
+
+  snapshot: null,
 };
 
 export const useDuoStore = create<DuoStore>()(
@@ -140,8 +165,7 @@ export const useDuoStore = create<DuoStore>()(
             isHost: true,
             isPaired: false,
             phase: 'waiting',
-            pairTimezone: 'UTC',
-            dailySeed
+            dailySeed,
           });
 
           // Connect WebSocket
@@ -164,13 +188,11 @@ export const useDuoStore = create<DuoStore>()(
             pairCode: code.toUpperCase(),
             odId: playerId,
             odName: playerName,
-            partnerId: isHost ? null : playerId, // Will be set properly on connect
             partnerName: partnerName,
             isHost: isHost,
-            isPaired: !isHost, // Partner is paired immediately, host waits
+            isPaired: true,
             phase: phase as DuoPhase,
-            pairTimezone: 'UTC',
-            dailySeed
+            dailySeed,
           });
 
           // Connect WebSocket
@@ -193,7 +215,7 @@ export const useDuoStore = create<DuoStore>()(
           set(initialState);
         },
 
-        // Select a line (secret until both pick)
+        // Select a line
         selectLine: async (line: LineSelection) => {
           const state = get();
 
@@ -207,81 +229,49 @@ export const useDuoStore = create<DuoStore>()(
             return { success: false, error: response.error || 'Failed to select line' };
           }
 
-          if (response.data.conflict) {
-            // Line was taken by partner
-            return { success: false, taken: true, error: 'Line already taken' };
+          if (!response.data.success) {
+            return { success: false, error: response.data.error || 'Selection failed' };
           }
 
           // Update local state
-          set({ myLine: line });
+          set({ myLine: line, isMyTurnToPick: false });
 
-          // If both have selected, card will be revealed via WebSocket
-          if (response.data.phase === 'playing' && response.data.hostLine && response.data.partnerLine) {
-            const isHost = state.isHost;
-            const myLine = isHost ? response.data.hostLine : response.data.partnerLine;
-            const theirLine = isHost ? response.data.partnerLine : response.data.hostLine;
-
-            const card = generateDailyCard(state.dailySeed || getTodayDateString());
-            set({
-              myLine,
-              partnerLine: theirLine,
-              dailyCard: card,
-              phase: 'playing'
-            });
-          }
-
+          // If both selected, server will send BOTH_SELECTED via WS
           return { success: true };
         },
 
-        // Mark a square
+        // Mark a square (toggle)
         markSquare: async (index: number) => {
           const state = get();
 
           if (state.phase !== 'playing') return;
-          if (state.markedSquares[index]) return;
           if (!state.pairCode || !state.odId) return;
 
-          // Optimistic update
-          const newMarked = [...state.markedSquares];
-          newMarked[index] = true;
-          set({ markedSquares: newMarked });
+          // Check if already marked by me (toggle = unmark)
+          const existingMark = state.marks.find(m => m.index === index && m.markedBy === state.odId);
 
-          // Calculate scores locally
-          let myScore = state.myScore;
-          let partnerScore = state.partnerScore;
+          if (existingMark) {
+            // Optimistic unmark
+            set({ marks: state.marks.filter(m => !(m.index === index && m.markedBy === state.odId)) });
+          } else {
+            // Optimistic mark
+            set({ marks: [...state.marks, { index, markedBy: state.odId! }] });
+          }
 
-          if (state.myLine) {
-            const myIndices = getLineIndices(state.myLine);
-            if (myIndices.includes(index)) {
-              myScore += 1;
+          // Send to server - server confirms with scores
+          const response = await apiMarkSquare(state.pairCode, state.odId, index);
+
+          if (response.success && response.data) {
+            // Server confirmed - update scores
+            set({
+              myScore: response.data.myScore,
+              partnerScore: response.data.partnerScore,
+            });
+
+            if (response.data.gameOver) {
+              // Game over will come via WS message
             }
           }
-
-          if (state.partnerLine) {
-            const partnerIndices = getLineIndices(state.partnerLine);
-            if (partnerIndices.includes(index)) {
-              partnerScore += 1;
-            }
-          }
-
-          // Check for bingo
-          let myBingo = state.myBingo;
-          let partnerBingo = state.partnerBingo;
-
-          if (state.myLine && !myBingo && isLineComplete(newMarked, state.myLine)) {
-            myBingo = true;
-            myScore += 5;
-          }
-
-          if (state.partnerLine && !partnerBingo && isLineComplete(newMarked, state.partnerLine)) {
-            partnerBingo = true;
-            partnerScore += 5;
-          }
-
-          set({ myScore, partnerScore, myBingo, partnerBingo });
-
-          // Send to server
-          await apiMarkSquare(state.pairCode, state.odId, index);
         },
 
         // Sync full state from backend
@@ -290,93 +280,123 @@ export const useDuoStore = create<DuoStore>()(
         },
 
         // Handle partner joined event
-        handlePartnerJoined: (partner: BingoPlayer) => {
+        handlePartnerJoined: (partner) => {
           set({
             partnerId: partner.id,
             partnerName: partner.name,
             isPaired: true,
-            phase: 'selecting'
+            phase: 'selecting',
           });
         },
 
-        // Handle partner selected their line (but we don't know which)
-        handlePartnerSelected: () => {
-          const state = get();
-          set({ partnerHasSelected: true });
-
-          // If we've also selected, transition to playing
-          if (state.myLine) {
-            const card = generateDailyCard(state.dailySeed || getTodayDateString());
-            set({ dailyCard: card, phase: 'playing' });
-          }
+        // Handle partner left
+        handlePartnerLeft: () => {
+          set({
+            partnerId: null,
+            partnerName: null,
+            isPaired: false,
+            phase: 'waiting',
+            myLine: null,
+            isMyTurnToPick: false,
+            partnerHasSelected: false,
+            partnerLine: null,
+            marks: [],
+            myScore: 0,
+            partnerScore: 0,
+            gameOver: false,
+            winner: null,
+          });
         },
 
-        // Handle card reveal (both lines now visible)
-        handleCardRevealed: (myLine: LineSelection, partnerLine: LineSelection) => {
+        // Handle your turn to pick
+        handleYourTurnToPick: () => {
+          set({ isMyTurnToPick: true });
+        },
+
+        // Handle both selected - transition to playing
+        handleBothSelected: () => {
           const state = get();
           const card = generateDailyCard(state.dailySeed || getTodayDateString());
-
           set({
-            myLine,
-            partnerLine,
             dailyCard: card,
-            phase: 'playing'
+            phase: 'playing',
+            partnerHasSelected: true,
           });
         },
 
-        // Handle square marked by partner
-        handleSquareMarked: (index: number, myScore: number, partnerScore: number) => {
+        // Handle square marked by anyone
+        handleSquareMarked: (index: number, markedBy: string, myScore: number, partnerScore: number) => {
           const state = get();
-          const newMarked = [...state.markedSquares];
-          newMarked[index] = true;
-
-          // Check for bingo
-          let myBingo = state.myBingo;
-          let partnerBingo = state.partnerBingo;
-
-          if (state.myLine && !myBingo && isLineComplete(newMarked, state.myLine)) {
-            myBingo = true;
-          }
-
-          if (state.partnerLine && !partnerBingo && isLineComplete(newMarked, state.partnerLine)) {
-            partnerBingo = true;
-          }
+          // Add mark if not already present
+          const alreadyMarked = state.marks.some(m => m.index === index && m.markedBy === markedBy);
+          const newMarks = alreadyMarked ? state.marks : [...state.marks, { index, markedBy }];
 
           set({
-            markedSquares: newMarked,
+            marks: newMarks,
             myScore,
             partnerScore,
-            myBingo,
-            partnerBingo
           });
         },
 
-        // Handle bingo event
-        handleBingo: (player: 'me' | 'partner', myScore: number, partnerScore: number) => {
-          if (player === 'me') {
-            set({ myBingo: true, myScore, partnerScore });
+        // Handle square unmarked
+        handleSquareUnmarked: (index: number, myScore: number, partnerScore: number) => {
+          const state = get();
+          set({
+            marks: state.marks.filter(m => m.index !== index),
+            myScore,
+            partnerScore,
+          });
+        },
+
+        // Handle game over
+        handleGameOver: (winner: string, myScore: number, partnerScore: number, hostLine: LineSelection, partnerLine: LineSelection) => {
+          const state = get();
+          const isHost = state.isHost;
+          const myLine = isHost ? hostLine : partnerLine;
+          const theirLine = isHost ? partnerLine : hostLine;
+
+          // Map winner to me/partner/tie
+          let winnerValue: 'me' | 'partner' | 'tie' | null = null;
+          if (winner === 'tie') {
+            winnerValue = 'tie';
+          } else if (
+            (winner === 'host' && isHost) ||
+            (winner === 'partner' && !isHost)
+          ) {
+            winnerValue = 'me';
           } else {
-            set({ partnerBingo: true, myScore, partnerScore });
+            winnerValue = 'partner';
           }
+
+          set({
+            phase: 'finished',
+            gameOver: true,
+            winner: winnerValue,
+            myScore,
+            partnerScore,
+            myLine: myLine,
+            partnerLine: theirLine,
+          });
         },
 
         // Handle daily reset
-        handleDailyReset: () => {
+        handleDailyReset: (newSeed: string) => {
           const state = get();
-          const newSeed = getTodayDateString();
 
           set({
             myLine: null,
             partnerLine: null,
+            isMyTurnToPick: false,
             partnerHasSelected: false,
             dailyCard: [],
             dailySeed: newSeed,
-            markedSquares: Array(25).fill(false),
+            marks: [],
             myScore: 0,
             partnerScore: 0,
-            myBingo: false,
-            partnerBingo: false,
-            phase: state.isPaired ? 'selecting' : 'unpaired'
+            gameOver: false,
+            winner: null,
+            snapshot: null,
+            phase: state.isPaired ? 'selecting' : 'unpaired',
           });
         },
 
@@ -386,7 +406,7 @@ export const useDuoStore = create<DuoStore>()(
           if (!state.dailySeed) return false;
 
           if (hasNewDayStarted(state.dailySeed)) {
-            get().handleDailyReset();
+            get().handleDailyReset(getTodayDateString());
             return true;
           }
           return false;
@@ -402,7 +422,29 @@ export const useDuoStore = create<DuoStore>()(
         getPartnerLineIndices: () => {
           const state = get();
           return state.partnerLine ? getLineIndices(state.partnerLine) : [];
-        }
+        },
+
+        // Load yesterday's snapshot
+        loadSnapshot: async () => {
+          const state = get();
+          if (!state.pairCode || !state.odId) return;
+
+          const response = await fetchSnapshot(state.pairCode, state.odId);
+          if (response.success && response.data) {
+            const snap = response.data as DuoSnapshotResponse;
+            set({
+              snapshot: {
+                date: snap.date,
+                myLine: snap.myLine,
+                partnerLine: snap.partnerLine,
+                marks: snap.marks,
+                myScore: snap.myScore,
+                partnerScore: snap.partnerScore,
+                winner: snap.winner,
+              },
+            });
+          }
+        },
       }),
       {
         name: 'duo-storage',
@@ -414,17 +456,17 @@ export const useDuoStore = create<DuoStore>()(
           partnerName: state.partnerName,
           isPaired: state.isPaired,
           isHost: state.isHost,
-          pairTimezone: state.pairTimezone,
           phase: state.phase,
           myLine: state.myLine,
-          partnerLine: state.partnerLine,
+          isMyTurnToPick: state.isMyTurnToPick,
           partnerHasSelected: state.partnerHasSelected,
           dailySeed: state.dailySeed,
-          markedSquares: state.markedSquares,
+          marks: state.marks,
           myScore: state.myScore,
           partnerScore: state.partnerScore,
-          myBingo: state.myBingo,
-          partnerBingo: state.partnerBingo
+          gameOver: state.gameOver,
+          winner: state.winner,
+          partnerLine: state.partnerLine,
         }),
         onRehydrateStorage: () => (state) => {
           if (!state) return;
@@ -439,7 +481,7 @@ export const useDuoStore = create<DuoStore>()(
           if (state.phase !== 'unpaired' && !state.pairCode) {
             useDuoStore.setState(initialState);
           }
-        }
+        },
       }
     )
   )
@@ -451,12 +493,12 @@ export function regenerateDailyCardIfNeeded(): void {
 
   // Check for daily reset first
   if (state.dailySeed && hasNewDayStarted(state.dailySeed)) {
-    useDuoStore.getState().handleDailyReset();
+    useDuoStore.getState().handleDailyReset(getTodayDateString());
     return;
   }
 
-  // Regenerate card from seed if in playing phase but card is empty
-  if (state.phase === 'playing' && state.dailySeed && state.dailyCard.length === 0) {
+  // Regenerate card from seed if in playing/finished phase but card is empty
+  if ((state.phase === 'playing' || state.phase === 'finished') && state.dailySeed && state.dailyCard.length === 0) {
     const card = generateDailyCard(state.dailySeed);
     useDuoStore.setState({ dailyCard: card });
   }
