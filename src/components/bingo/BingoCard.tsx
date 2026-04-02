@@ -10,7 +10,6 @@ interface BingoCardProps {
   myLineIndices: number[];
   phase: 'playing' | 'finished';
   partnerLineIndices?: number[];
-  // Solo mode fallback props
   hasBingo?: boolean;
 }
 
@@ -26,7 +25,6 @@ export function BingoCard({
 }: BingoCardProps) {
   const gridRef = useRef<HTMLDivElement>(null);
 
-  // Check if square is marked and by whom
   const getMarkInfo = (index: number) => {
     const myMark = marks.find(m => m.index === index && m.markedBy === myPlayerId);
     const partnerMark = marks.find(m => m.index === index && m.markedBy !== myPlayerId);
@@ -39,18 +37,18 @@ export function BingoCard({
     const isMyLine = myLineIndices.includes(index);
     const isPartnerLine = phase === 'finished' && partnerLineIndices.includes(index);
 
-    // Line indicator - subtle ring
+    // Line indicator — subtle ring in new palette
     if (isMyLine && isPartnerLine) {
-      classes += ' ring-1 ring-purple-400/60';
+      classes += ' ring-1 ring-j-accent/50';
     } else if (isMyLine) {
-      classes += ' ring-1 ring-cyan-400/60';
+      classes += ' ring-1 ring-j-me/40';
     } else if (isPartnerLine) {
-      classes += ' ring-1 ring-orange-400/60';
+      classes += ' ring-1 ring-j-partner/40';
     }
 
     // Mark colors
     if (myMark && partnerMark) {
-      classes += ' marked'; // Both marked
+      classes += ' marked';
     } else if (myMark) {
       classes += ' marked marked-mine';
     } else if (partnerMark) {
@@ -64,7 +62,6 @@ export function BingoCard({
     return classes;
   };
 
-  // Keyboard navigation handler
   const handleKeyDown = useCallback((event: React.KeyboardEvent, index: number) => {
     const gridSize = 5;
     let newIndex = index;
@@ -107,7 +104,6 @@ export function BingoCard({
     newSquareElement?.focus();
   }, [squares, onSquareClick]);
 
-  // Accessibility
   const getAriaLabel = useCallback((square: BingoSquare, index: number) => {
     const row = Math.floor(index / 5) + 1;
     const col = (index % 5) + 1;
@@ -137,7 +133,7 @@ export function BingoCard({
   const totalMarked = marks.length;
 
   return (
-    <div className="apple-panel p-6 max-w-2xl mx-auto">
+    <div className="max-w-4xl mx-auto">
       {/* BINGO Header */}
       <div className="bingo-header">
         {['B', 'I', 'N', 'G', 'O'].map((letter) => (
@@ -148,24 +144,24 @@ export function BingoCard({
       </div>
 
       {/* Legend */}
-      <div className="flex justify-center gap-4 mb-4 text-xs">
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-cyan-500/60"></div>
-          <span className="text-cyan-400">Your marks</span>
+      <div className="flex flex-wrap justify-center gap-4 mb-4 text-xs font-mono">
+        <div className="flex items-center gap-1.5">
+          <div className="w-2.5 h-2.5 rounded-sm bg-j-me/70"></div>
+          <span className="text-j-me">Your marks</span>
         </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded bg-orange-500/60"></div>
-          <span className="text-orange-400">Partner marks</span>
+        <div className="flex items-center gap-1.5">
+          <div className="w-2.5 h-2.5 rounded-sm bg-j-partner/70"></div>
+          <span className="text-j-partner">Partner marks</span>
         </div>
         {phase === 'finished' && (
           <>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded ring-1 ring-cyan-400/60 bg-transparent"></div>
-              <span className="text-cyan-400">Your line</span>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-sm ring-1 ring-j-me/50 bg-transparent"></div>
+              <span className="text-j-me">Your line</span>
             </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded ring-1 ring-orange-400/60 bg-transparent"></div>
-              <span className="text-orange-400">Partner line</span>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2.5 h-2.5 rounded-sm ring-1 ring-j-partner/50 bg-transparent"></div>
+              <span className="text-j-partner">Partner line</span>
             </div>
           </>
         )}
@@ -195,19 +191,19 @@ export function BingoCard({
               tabIndex={index === 0 ? 0 : -1}
               disabled={phase === 'finished'}
             >
-              {/* Checkmark overlay for marks */}
+              {/* Checkmark overlay */}
               {(myMark || partnerMark) && (
-                <div className="absolute top-1 right-1 z-10 flex gap-0.5">
+                <div className="absolute top-0.5 right-0.5 z-10 flex gap-0.5">
                   {myMark && (
-                    <div className="w-4 h-4 bg-cyan-500 bg-opacity-90 rounded-full flex items-center justify-center shadow-lg">
-                      <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <div className="w-3.5 h-3.5 bg-j-me rounded-full flex items-center justify-center shadow-sm">
+                      <svg className="w-2 h-2 text-j-bg" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
                     </div>
                   )}
                   {partnerMark && (
-                    <div className="w-4 h-4 bg-orange-500 bg-opacity-90 rounded-full flex items-center justify-center shadow-lg">
-                      <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <div className="w-3.5 h-3.5 bg-j-partner rounded-full flex items-center justify-center shadow-sm">
+                      <svg className="w-2 h-2 text-j-bg" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
                     </div>
@@ -215,7 +211,6 @@ export function BingoCard({
                 </div>
               )}
 
-              {/* Square text */}
               <span className="relative z-0 pointer-events-none">
                 {square.text}
               </span>
@@ -224,17 +219,16 @@ export function BingoCard({
         })}
       </div>
 
-      {/* Hidden instructions for screen readers */}
       <div id="bingo-instructions" className="sr-only">
         Use arrow keys to navigate the bingo grid. Press Enter or Space to mark a square when you hear the phrase mentioned.
       </div>
 
       {/* Game Progress */}
-      <div className="mt-6 flex items-center justify-between">
-        <div className="text-sm text-apple-secondary">
-          <span>Marked: {totalMarked}</span>
+      <div className="mt-4 flex items-center justify-between px-1">
+        <div className="text-xs text-j-secondary font-mono">
+          Marked: {totalMarked}
         </div>
-        <div className="text-xs text-apple-tertiary font-mono">
+        <div className="text-xs text-j-muted font-mono">
           Tap matching phrases
         </div>
       </div>

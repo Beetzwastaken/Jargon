@@ -13,16 +13,15 @@ export function WelcomeTutorial({ show, onComplete }: WelcomeTutorialProps) {
       title: "Welcome to Jargon",
       content: (
         <div className="space-y-4">
-          <p className="text-apple-text text-lg">
+          <p className="text-j-text text-lg">
             Buzzword bingo you play during real meetings.
           </p>
-          <p className="text-apple-secondary">
+          <p className="text-j-secondary">
             Open the app before your next meeting. You'll get a card of corporate buzzwords.
             When someone in the meeting says one — tap it. Complete a line and you win.
           </p>
-          <div className="bg-apple-darkest rounded-lg p-4 text-sm text-apple-secondary space-y-2">
-            <p><span className="text-purple-400 font-medium">Solo</span> — Play on your own during any meeting</p>
-            <p><span className="text-cyan-400 font-medium">Duo</span> — Pair with a colleague, race to complete your line first</p>
+          <div className="bg-j-raised rounded-lg p-4 text-sm text-j-secondary space-y-2">
+            <p>Pair with a colleague using a 4-character code. Race to complete your secret line first.</p>
           </div>
         </div>
       )
@@ -33,22 +32,22 @@ export function WelcomeTutorial({ show, onComplete }: WelcomeTutorialProps) {
         <div className="space-y-4">
           <div className="space-y-3">
             {[
-              { num: '1', text: 'Pick Solo or Duo on the home screen' },
+              { num: '1', text: 'Create a game or join with a code' },
               { num: '2', text: 'Open the app when your meeting starts' },
               { num: '3', text: 'Tap buzzwords as you hear them in the meeting' },
               { num: '4', text: 'Complete a full line (row, column, or diagonal) to win' }
             ].map(({ num, text }) => (
               <div key={num} className="flex items-start gap-3">
-                <div className="w-7 h-7 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 font-bold text-sm flex-shrink-0">
+                <div className="w-7 h-7 rounded-full bg-j-accent/20 flex items-center justify-center text-j-accent font-bold text-sm font-mono flex-shrink-0">
                   {num}
                 </div>
-                <p className="text-apple-secondary text-sm pt-1">{text}</p>
+                <p className="text-j-secondary text-sm pt-1">{text}</p>
               </div>
             ))}
           </div>
-          <div className="bg-apple-darkest rounded-lg p-4 text-sm">
-            <p className="text-apple-tertiary">
-              Everyone gets the same card each day (like Wordle). New card at midnight.
+          <div className="bg-j-raised rounded-lg p-4 text-sm">
+            <p className="text-j-tertiary font-mono text-xs">
+              Everyone gets the same card each day. New card at UTC midnight.
             </p>
           </div>
         </div>
@@ -58,23 +57,24 @@ export function WelcomeTutorial({ show, onComplete }: WelcomeTutorialProps) {
       title: "Duo Mode",
       content: (
         <div className="space-y-4">
-          <p className="text-apple-secondary">
-            In Duo, you and a partner get the same card. Each of you secretly picks a line
-            to complete. First to finish their line wins.
+          <p className="text-j-secondary">
+            You and a partner get the same card. Each of you secretly picks a line
+            to complete. Your opponent scores when they mark squares in YOUR line.
+            First to 5 wins.
           </p>
-          <div className="bg-apple-darkest rounded-lg p-4 text-sm text-apple-secondary space-y-2">
+          <div className="bg-j-raised rounded-lg p-4 text-sm text-j-secondary space-y-2">
             <p>Create a room and share the 4-character code</p>
             <p>Or join with a code from your partner</p>
             <p>Both pick your lines, then start tapping</p>
           </div>
-          <div className="flex gap-4 text-sm">
+          <div className="flex gap-4 text-xs font-mono">
             <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded ring-2 ring-cyan-500 bg-cyan-900/40"></div>
-              <span className="text-cyan-400">Your line</span>
+              <div className="w-3 h-3 rounded bg-j-me/40 ring-1 ring-j-me/60"></div>
+              <span className="text-j-me">Your line</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded ring-2 ring-orange-500 bg-orange-900/40"></div>
-              <span className="text-orange-400">Partner's</span>
+              <div className="w-3 h-3 rounded bg-j-partner/40 ring-1 ring-j-partner/60"></div>
+              <span className="text-j-partner">Partner's</span>
             </div>
           </div>
         </div>
@@ -90,11 +90,11 @@ export function WelcomeTutorial({ show, onComplete }: WelcomeTutorialProps) {
     <>
       <div className="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm z-[1100]" />
       <div className="fixed inset-0 flex items-center justify-center z-[1101] p-4">
-        <div className="bg-apple-dark border border-apple-border rounded-2xl shadow-2xl max-w-lg w-full max-h-[85vh] flex flex-col">
-          <div className="border-b border-apple-border p-5">
+        <div className="bg-j-surface border border-white/[0.06] rounded-2xl shadow-2xl max-w-lg w-full max-h-[85vh] flex flex-col">
+          <div className="border-b border-white/[0.06] p-5">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-apple-text">{steps[step].title}</h2>
-              <button onClick={onComplete} className="text-apple-secondary hover:text-apple-text text-sm">
+              <h2 className="text-xl font-bold text-j-text">{steps[step].title}</h2>
+              <button onClick={onComplete} className="text-j-secondary hover:text-j-text text-sm">
                 Skip
               </button>
             </div>
@@ -103,7 +103,7 @@ export function WelcomeTutorial({ show, onComplete }: WelcomeTutorialProps) {
                 <div
                   key={i}
                   className={`h-1 flex-1 rounded-full ${
-                    i === step ? 'bg-purple-400' : i < step ? 'bg-purple-600' : 'bg-apple-border'
+                    i === step ? 'bg-j-accent' : i < step ? 'bg-j-accent/40' : 'bg-white/[0.06]'
                   }`}
                 />
               ))}
@@ -114,19 +114,19 @@ export function WelcomeTutorial({ show, onComplete }: WelcomeTutorialProps) {
             {steps[step].content}
           </div>
 
-          <div className="border-t border-apple-border p-5 flex items-center justify-between">
+          <div className="border-t border-white/[0.06] p-5 flex items-center justify-between">
             <button
               onClick={() => setStep(s => s - 1)}
               disabled={step === 0}
               className={`px-4 py-2 rounded-lg text-sm ${
-                step === 0 ? 'text-apple-tertiary cursor-not-allowed' : 'text-apple-text hover:bg-apple-hover'
+                step === 0 ? 'text-j-muted cursor-not-allowed' : 'text-j-text hover:bg-j-hover'
               }`}
             >
               Back
             </button>
             <button
               onClick={isLast ? onComplete : () => setStep(s => s + 1)}
-              className="px-5 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm font-medium transition-colors"
+              className="px-5 py-2 bg-j-accent hover:bg-j-accent-hover text-j-bg rounded-lg text-sm font-semibold transition-colors"
             >
               {isLast ? 'Got it' : 'Next'}
             </button>

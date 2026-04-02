@@ -1,10 +1,82 @@
-<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Large bold "B." -->
-  <text x="32" y="32" text-anchor="middle" font-family="Arial, sans-serif" font-size="32" font-weight="900" fill="white">B.</text>
-
-  <!-- "CORPORATE" text -->
-  <text x="32" y="46" text-anchor="middle" font-family="Arial, sans-serif" font-size="5.5" font-weight="400" fill="white" letter-spacing="1.5">CORPORATE</text>
-
-  <!-- "BINGO" text -->
-  <text x="32" y="52" text-anchor="middle" font-family="Arial, sans-serif" font-size="5.5" font-weight="400" fill="white" letter-spacing="1.5">BINGO</text>
+<svg width="160" height="160" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0%" stop-color="#e8bd62"/>
+      <stop offset="45%" stop-color="#d4a04a"/>
+      <stop offset="100%" stop-color="#9a7030"/>
+    </linearGradient>
+    <linearGradient id="hi" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="white" stop-opacity="0.25"/>
+      <stop offset="50%" stop-color="white" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="sh" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="70%" stop-color="black" stop-opacity="0"/>
+      <stop offset="100%" stop-color="black" stop-opacity="0.2"/>
+    </linearGradient>
+    <filter id="emboss">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="1.5" result="blur"/>
+      <feOffset in="blur" dx="0" dy="1.5" result="offsetBlur"/>
+      <feComposite in="SourceGraphic" in2="offsetBlur" operator="over"/>
+    </filter>
+    <filter id="noise">
+      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" result="n"/>
+      <feColorMatrix type="saturate" values="0" in="n" result="g"/>
+      <feBlend in="SourceGraphic" in2="g" mode="multiply"/>
+      <feComponentTransfer><feFuncA type="linear" slope="1"/></feComponentTransfer>
+    </filter>
+    <clipPath id="c"><rect x="6" y="6" width="148" height="148" rx="30"/></clipPath>
+  </defs>
+  <!-- Gold base -->
+  <rect x="6" y="6" width="148" height="148" rx="30" fill="url(#gold)"/>
+  <!-- Grain -->
+  <rect x="6" y="6" width="148" height="148" rx="30" fill="url(#gold)" filter="url(#noise)" opacity="0.3" clip-path="url(#c)"/>
+  <!-- Highlight -->
+  <rect x="6" y="6" width="148" height="80" rx="30" fill="url(#hi)"/>
+  <!-- Shadow -->
+  <rect x="6" y="6" width="148" height="148" rx="30" fill="url(#sh)"/>
+  <!-- Ghost bingo board 5x5 -->
+  <g clip-path="url(#c)" opacity="0.045">
+    <rect x="12" y="12" width="24" height="24" rx="4" fill="#0c0c0e"/>
+    <rect x="40" y="12" width="24" height="24" rx="4" fill="#0c0c0e"/>
+    <rect x="68" y="12" width="24" height="24" rx="4" fill="#0c0c0e"/>
+    <rect x="96" y="12" width="24" height="24" rx="4" fill="#0c0c0e"/>
+    <rect x="124" y="12" width="24" height="24" rx="4" fill="#0c0c0e"/>
+    <rect x="12" y="40" width="24" height="24" rx="4" fill="#0c0c0e"/>
+    <rect x="40" y="40" width="24" height="24" rx="4" fill="#0c0c0e"/>
+    <rect x="68" y="40" width="24" height="24" rx="4" fill="#0c0c0e"/>
+    <rect x="96" y="40" width="24" height="24" rx="4" fill="#0c0c0e"/>
+    <rect x="124" y="40" width="24" height="24" rx="4" fill="#0c0c0e"/>
+    <rect x="12" y="68" width="24" height="24" rx="4" fill="#0c0c0e"/>
+    <rect x="40" y="68" width="24" height="24" rx="4" fill="#0c0c0e"/>
+    <rect x="68" y="68" width="24" height="24" rx="4" fill="#0c0c0e"/>
+    <rect x="96" y="68" width="24" height="24" rx="4" fill="#0c0c0e"/>
+    <rect x="124" y="68" width="24" height="24" rx="4" fill="#0c0c0e"/>
+    <rect x="12" y="96" width="24" height="24" rx="4" fill="#0c0c0e"/>
+    <rect x="40" y="96" width="24" height="24" rx="4" fill="#0c0c0e"/>
+    <rect x="68" y="96" width="24" height="24" rx="4" fill="#0c0c0e"/>
+    <rect x="96" y="96" width="24" height="24" rx="4" fill="#0c0c0e"/>
+    <rect x="124" y="96" width="24" height="24" rx="4" fill="#0c0c0e"/>
+    <rect x="12" y="124" width="24" height="24" rx="4" fill="#0c0c0e"/>
+    <rect x="40" y="124" width="24" height="24" rx="4" fill="#0c0c0e"/>
+    <rect x="68" y="124" width="24" height="24" rx="4" fill="#0c0c0e"/>
+    <rect x="96" y="124" width="24" height="24" rx="4" fill="#0c0c0e"/>
+    <rect x="124" y="124" width="24" height="24" rx="4" fill="#0c0c0e"/>
+  </g>
+  <!-- Grid lines -->
+  <g clip-path="url(#c)" stroke="#0c0c0e" stroke-width="0.4" opacity="0.06">
+    <line x1="39" y1="6" x2="39" y2="154"/>
+    <line x1="67" y1="6" x2="67" y2="154"/>
+    <line x1="95" y1="6" x2="95" y2="154"/>
+    <line x1="123" y1="6" x2="123" y2="154"/>
+    <line x1="6" y1="39" x2="154" y2="39"/>
+    <line x1="6" y1="67" x2="154" y2="67"/>
+    <line x1="6" y1="95" x2="154" y2="95"/>
+    <line x1="6" y1="123" x2="154" y2="123"/>
+  </g>
+  <!-- J with depth -->
+  <text x="80" y="114" text-anchor="middle" font-family="Sora, system-ui, sans-serif" font-weight="800" font-size="100" fill="#0c0c0e" opacity="0.12" filter="url(#emboss)">J</text>
+  <text x="80" y="112" text-anchor="middle" font-family="Sora, system-ui, sans-serif" font-weight="800" font-size="100" fill="#0c0c0e" opacity="0.85">J</text>
+  <!-- Borders -->
+  <rect x="6" y="6" width="148" height="148" rx="30" fill="none" stroke="white" stroke-width="1" opacity="0.15"/>
+  <rect x="9" y="9" width="142" height="142" rx="28" fill="none" stroke="#0c0c0e" stroke-width="0.5" opacity="0.15"/>
 </svg>

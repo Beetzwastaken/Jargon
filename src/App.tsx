@@ -18,7 +18,7 @@ const RoomManager = lazy(() => import('./components/bingo/RoomManager').then(mod
 function ComponentLoader() {
   return (
     <div className="flex items-center justify-center p-8">
-      <div className="animate-spin w-6 h-6 border-2 border-apple-accent border-t-transparent rounded-full"></div>
+      <div className="animate-spin w-6 h-6 border-2 border-j-accent border-t-transparent rounded-full"></div>
     </div>
   );
 }
@@ -141,17 +141,17 @@ function App() {
 
   // Render duo mode
   return (
-    <div className="h-screen bg-black text-white font-system flex flex-col overflow-hidden">
+    <div className="h-screen bg-j-bg text-j-text font-display flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="bg-apple-dark border-b border-apple-border z-50 backdrop-blur-xl bg-opacity-80 flex-shrink-0">
+      <header className="bg-j-surface/80 border-b border-white/[0.06] z-50 backdrop-blur-xl flex-shrink-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-14">
             {/* Logo + Back */}
             <div className="flex items-center space-x-3">
               {phase === 'unpaired' && (
                 <button
                   onClick={handleBackToModeSelect}
-                  className="p-2 -ml-2 text-apple-secondary hover:text-apple-text transition-colors"
+                  className="p-2 -ml-2 text-j-secondary hover:text-j-text transition-colors"
                   title="Back"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -160,8 +160,8 @@ function App() {
                 </button>
               )}
               <div>
-                <h1 className="text-lg font-medium text-apple-text">Jargon</h1>
-                <span className="text-xs text-apple-tertiary">Duo Mode</span>
+                <h1 className="text-base font-semibold text-j-text tracking-tight">Jargon</h1>
+                <span className="text-[10px] text-j-tertiary font-mono uppercase tracking-wider">Duo Mode</span>
               </div>
             </div>
 
@@ -170,15 +170,14 @@ function App() {
               {phase !== 'unpaired' && (
                 <>
                   <div className="flex items-center space-x-2">
-                    <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                    <span className="text-xs text-apple-secondary">
+                    <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-j-success' : 'bg-j-error'}`}></div>
+                    <span className="text-[10px] text-j-secondary font-mono">
                       {isConnected ? 'Connected' : connectionError || 'Disconnected'}
                     </span>
                   </div>
                   {pairCode && (
-                    <div className="px-3 py-1 bg-apple-darkest rounded-lg">
-                      <span className="text-xs text-apple-tertiary">Room: </span>
-                      <span className="font-mono text-cyan-400">{pairCode}</span>
+                    <div className="px-2.5 py-1 bg-j-raised rounded-md border border-white/[0.06]">
+                      <span className="font-mono text-xs text-j-accent">{pairCode}</span>
                     </div>
                   )}
                 </>
@@ -186,14 +185,14 @@ function App() {
             </div>
 
             {/* Right Controls */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
               {phase !== 'unpaired' && (
                 <button
                   onClick={toggleSidebar}
-                  className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                  className={`px-3 py-1.5 text-xs font-mono rounded-md transition-colors ${
                     sidebarOpen
-                      ? 'bg-apple-accent text-white'
-                      : 'text-apple-secondary hover:text-apple-text hover:bg-apple-hover'
+                      ? 'bg-j-accent text-j-bg'
+                      : 'text-j-secondary hover:text-j-text hover:bg-j-hover'
                   }`}
                 >
                   {sidebarOpen ? 'Close' : 'Game Info'}
@@ -203,7 +202,7 @@ function App() {
               {phase !== 'unpaired' && (
                 <button
                   onClick={handleLeaveGame}
-                  className="px-3 py-1.5 text-sm text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-md transition-colors"
+                  className="px-3 py-1.5 text-xs font-mono text-j-error hover:text-j-error/80 hover:bg-j-error/10 rounded-md transition-colors"
                 >
                   Leave
                 </button>
@@ -211,7 +210,7 @@ function App() {
 
               <button
                 onClick={() => setShowTutorial(true)}
-                className="p-2 text-apple-secondary hover:text-apple-text transition-colors"
+                className="p-2 text-j-secondary hover:text-j-text transition-colors"
                 title="Show tutorial"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -219,7 +218,7 @@ function App() {
                 </svg>
               </button>
 
-              <div className="text-xs text-apple-secondary font-mono">
+              <div className="text-xs text-j-muted font-mono">
                 v{APP_VERSION}
               </div>
             </div>
@@ -238,7 +237,7 @@ function App() {
 
         {/* Main Content */}
         <main className="flex-1 overflow-auto p-4">
-          <div className="max-w-2xl mx-auto">
+          <div className="max-w-4xl mx-auto">
             {/* Phase: Unpaired - Show RoomManager */}
             {phase === 'unpaired' && (
               <Suspense fallback={<ComponentLoader />}>
@@ -249,15 +248,15 @@ function App() {
             {/* Phase: Waiting - Show waiting screen with code */}
             {phase === 'waiting' && (
               <div className="text-center py-12">
-                <div className="w-20 h-20 mx-auto mb-6 bg-apple-accent/20 rounded-full flex items-center justify-center">
-                  <div className="w-10 h-10 border-3 border-apple-accent border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-20 h-20 mx-auto mb-6 bg-j-accent/20 rounded-full flex items-center justify-center">
+                  <div className="w-10 h-10 border-3 border-j-accent border-t-transparent rounded-full animate-spin"></div>
                 </div>
-                <h2 className="text-2xl font-semibold text-apple-text mb-2">Waiting for Partner</h2>
-                <p className="text-apple-secondary mb-6">Share the code below with your teammate</p>
+                <h2 className="text-2xl font-semibold text-j-text mb-2">Waiting for Partner</h2>
+                <p className="text-j-secondary mb-6">Share the code below with your teammate</p>
 
-                <div className="inline-block p-6 bg-apple-darkest rounded-xl">
-                  <p className="text-xs text-apple-tertiary uppercase tracking-wider mb-2">Your Game Code</p>
-                  <div className="text-5xl font-mono font-bold text-cyan-400 tracking-widest">
+                <div className="inline-block p-6 bg-j-raised rounded-xl">
+                  <p className="text-xs text-j-tertiary uppercase tracking-wider mb-2">Your Game Code</p>
+                  <div className="text-5xl font-mono font-bold text-j-me tracking-widest">
                     {pairCode}
                   </div>
                 </div>
@@ -270,7 +269,7 @@ function App() {
                         showGameToast('Copied!', 'Code copied to clipboard', 'success');
                       }
                     }}
-                    className="px-4 py-2 bg-apple-darkest hover:bg-apple-hover text-apple-text rounded-lg transition-colors"
+                    className="px-4 py-2 bg-j-raised hover:bg-j-hover text-j-text rounded-lg transition-colors"
                   >
                     Copy Code
                   </button>
@@ -282,14 +281,14 @@ function App() {
                         showGameToast('Link Copied!', 'Share this link with your partner', 'success');
                       }
                     }}
-                    className="px-4 py-2 bg-apple-accent hover:bg-apple-accent-hover text-white rounded-lg transition-colors"
+                    className="px-4 py-2 bg-j-accent hover:bg-j-accent-hover text-white rounded-lg transition-colors"
                   >
                     Copy Link
                   </button>
                 </div>
 
-                <p className="mt-6 text-apple-tertiary text-sm">
-                  Playing as: <span className="text-apple-text">{odName}</span>
+                <p className="mt-6 text-j-tertiary text-sm">
+                  Playing as: <span className="text-j-text">{odName}</span>
                 </p>
               </div>
             )}
@@ -306,8 +305,8 @@ function App() {
                 />
 
                 {isPaired && (
-                  <div className="mt-6 text-center text-apple-tertiary text-sm">
-                    Playing with: <span className="text-apple-text">{partnerName}</span>
+                  <div className="mt-6 text-center text-j-tertiary text-sm">
+                    Playing with: <span className="text-j-text">{partnerName}</span>
                   </div>
                 )}
               </div>
@@ -318,7 +317,7 @@ function App() {
               <>
                 {/* Today's Card header */}
                 <div className="text-center mb-4">
-                  <p className="text-sm text-apple-tertiary">
+                  <p className="text-sm text-j-tertiary">
                     Today's Card
                   </p>
                 </div>
@@ -365,11 +364,11 @@ function App() {
 
         {/* Sidebar - Game Info */}
         {sidebarOpen && phase !== 'unpaired' && (
-          <aside className="w-80 bg-apple-sidebar border-l border-apple-border overflow-auto fixed right-0 top-16 bottom-0 z-50 md:relative md:top-0">
+          <aside className="w-80 bg-j-surface border-l border-white/[0.06] overflow-auto fixed right-0 top-16 bottom-0 z-50 md:relative md:top-0">
             {/* Mobile Close */}
-            <div className="md:hidden sticky top-0 bg-apple-sidebar border-b border-apple-border p-4 flex items-center justify-between">
-              <h3 className="text-lg font-medium text-apple-text">Game Info</h3>
-              <button onClick={closeSidebar} className="p-2 hover:bg-apple-hover rounded-lg">
+            <div className="md:hidden sticky top-0 bg-j-surface border-b border-white/[0.06] p-4 flex items-center justify-between">
+              <h3 className="text-lg font-medium text-j-text">Game Info</h3>
+              <button onClick={closeSidebar} className="p-2 hover:bg-j-hover rounded-lg">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -379,16 +378,16 @@ function App() {
             <div className="p-4 space-y-4">
               {/* Player Info */}
               <div className="apple-panel p-4">
-                <h3 className="text-sm font-medium text-apple-secondary mb-3">Players</h3>
+                <h3 className="text-sm font-medium text-j-secondary mb-3">Players</h3>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-cyan-400">{odName || 'You'}</span>
-                    <span className="text-cyan-400 font-bold">{myScore}/5</span>
+                    <span className="text-j-me">{odName || 'You'}</span>
+                    <span className="text-j-me font-bold">{myScore}/5</span>
                   </div>
                   {partnerName && (
                     <div className="flex items-center justify-between">
-                      <span className="text-orange-400">{partnerName}</span>
-                      <span className="text-orange-400 font-bold">{partnerScore}/5</span>
+                      <span className="text-j-partner">{partnerName}</span>
+                      <span className="text-j-partner font-bold">{partnerScore}/5</span>
                     </div>
                   )}
                 </div>
@@ -396,8 +395,8 @@ function App() {
 
               {/* Scoring Rules */}
               <div className="apple-panel p-4">
-                <h3 className="text-sm font-medium text-apple-secondary mb-3">Scoring</h3>
-                <ul className="text-xs text-apple-tertiary space-y-1">
+                <h3 className="text-sm font-medium text-j-secondary mb-3">Scoring</h3>
+                <ul className="text-xs text-j-tertiary space-y-1">
                   <li>Your score = opponent's line squares you marked</li>
                   <li>5/5 = BINGO (early win)</li>
                   <li>New card at UTC midnight</li>
@@ -406,10 +405,10 @@ function App() {
 
               {/* Connection Status */}
               <div className="apple-panel p-4">
-                <h3 className="text-sm font-medium text-apple-secondary mb-3">Connection</h3>
+                <h3 className="text-sm font-medium text-j-secondary mb-3">Connection</h3>
                 <div className="flex items-center space-x-2">
                   <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                  <span className="text-xs text-apple-tertiary">
+                  <span className="text-xs text-j-tertiary">
                     {isConnected ? 'Real-time sync active' : 'Reconnecting...'}
                   </span>
                 </div>

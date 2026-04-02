@@ -85,11 +85,11 @@ function ToastItem({ toast, onRemove }: ToastItemProps) {
         return 'bg-yellow-900/90 border-yellow-500/50 text-yellow-100';
       case 'score':
         return toast.points && toast.points > 0 
-          ? 'bg-cyan-900/90 border-cyan-500/50 text-cyan-100'
-          : 'bg-red-900/90 border-red-500/50 text-red-100';
+          ? 'bg-j-me/20 border-j-me/40 text-j-text'
+          : 'bg-j-error/20 border-j-error/40 text-j-text';
       case 'info':
       default:
-        return 'bg-apple-darker border-apple-border text-apple-text';
+        return 'bg-j-surface border-white/[0.06] text-j-text';
     }
   };
 
@@ -143,8 +143,8 @@ function ToastItem({ toast, onRemove }: ToastItemProps) {
                 <div className={`
                   px-2 py-1 rounded-full text-xs font-bold
                   ${toast.points > 0 
-                    ? 'bg-cyan-500/20 text-cyan-300' 
-                    : 'bg-red-500/20 text-red-300'
+                    ? 'bg-j-me/20 text-j-me'
+                    : 'bg-j-error/20 text-j-error'
                   }
                 `}>
                   {toast.points > 0 ? '+' : ''}{toast.points}
@@ -175,7 +175,7 @@ function ToastItem({ toast, onRemove }: ToastItemProps) {
           <div
             className={`h-full transition-transform ${
               toast.type === 'score' 
-                ? 'bg-cyan-400' 
+                ? 'bg-j-me'
                 : 'bg-white/30'
             }`}
             style={{
