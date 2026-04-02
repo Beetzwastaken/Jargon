@@ -88,6 +88,8 @@ export const useSoloStore = create<SoloStore>()(
           const state = get();
 
           if (index < 0 || index >= 25) return;
+          // Once bingo is confirmed, no more scoring changes
+          if (state.hasBingo) return;
           const newMarked = [...state.markedSquares];
           newMarked[index] = !newMarked[index];
 
