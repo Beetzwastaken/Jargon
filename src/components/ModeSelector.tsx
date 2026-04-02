@@ -32,10 +32,30 @@ export function ModeSelector({ onSelectMode }: ModeSelectorProps) {
 
       {/* Mode cards */}
       <div className="flex flex-col gap-4 max-w-xl w-full px-6 relative">
+        {/* Solo */}
+        <button
+          onClick={() => onSelectMode('solo')}
+          className="group p-6 bg-j-surface hover:bg-j-hover border border-j-muted/20 hover:border-j-me/30 rounded-2xl transition-all duration-200 text-left animate-fade-in-up stagger-1"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-xl font-semibold text-j-text group-hover:text-j-me transition-colors">Solo</h2>
+            <span className="text-j-tertiary text-xs font-mono uppercase tracking-wider">Any meeting</span>
+          </div>
+          <p className="text-j-tertiary text-sm leading-relaxed">
+            Tap buzzwords as you hear them. See how many you can spot.
+          </p>
+          <div className="mt-4 flex items-center gap-2 text-j-me/60 group-hover:text-j-me/90 transition-colors">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+            <span className="text-xs font-mono">Start playing</span>
+          </div>
+        </button>
+
         {/* Duo */}
         <button
           onClick={() => onSelectMode('duo')}
-          className="group p-6 bg-j-surface hover:bg-j-hover border border-j-muted/20 hover:border-j-accent/30 rounded-2xl transition-all duration-200 text-left animate-fade-in-up stagger-1"
+          className="group p-6 bg-j-surface hover:bg-j-hover border border-j-muted/20 hover:border-j-accent/30 rounded-2xl transition-all duration-200 text-left animate-fade-in-up stagger-2"
         >
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-xl font-semibold text-j-text group-hover:text-j-accent transition-colors">Duo</h2>
