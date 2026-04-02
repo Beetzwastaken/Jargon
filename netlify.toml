@@ -15,28 +15,29 @@
     X-XSS-Protection = "1; mode=block"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' wss://api.playjargon.com https://api.playjargon.com; img-src 'self' data:; font-src 'self'"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; connect-src 'self' wss://api.playjargon.com https://api.playjargon.com; img-src 'self' data:; font-src 'self' https://fonts.gstatic.com"
     Cache-Control = "no-cache, no-store, must-revalidate"
 
+# Service worker must never be cached by CDN
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+# Hashed assets can be cached forever (Vite adds content hash to filenames)
 [[headers]]
   for = "/assets/*"
   [headers.values]
-    Cache-Control = "no-cache, no-store, must-revalidate"
+    Cache-Control = "public, max-age=31536000, immutable"
 
-[[headers]]
-  for = "/vite.svg"
-  [headers.values]
-    Cache-Control = "no-cache, no-store, must-revalidate"
-
-
-# Proxy API requests to avoid CORS/SSL issues
+# Proxy API requests
 [[redirects]]
   from = "/api/*"
   to = "https://api.playjargon.com/api/:splat"
   status = 200
   force = true
 
-# Redirect for SPA-like behavior (though we're using a single HTML file)
+# SPA fallback
 [[redirects]]
   from = "/*"
   to = "/index.html"
