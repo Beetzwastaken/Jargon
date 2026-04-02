@@ -1,5 +1,5 @@
-// LineSelector - Tap lines directly on the board
-import { useState } from 'react';
+// LineSelector - Two-tap line selection on the board
+import { useState, useCallback } from 'react';
 import type { LineSelection } from '../../stores/duoStore';
 import { getLineIndices } from '../../lib/dailyCard';
 
@@ -11,15 +11,8 @@ interface LineSelectorProps {
   disabled?: boolean;
 }
 
-const ALL_LINES: LineSelection[] = [
-  { type: 'row', index: 0 }, { type: 'row', index: 1 },
-  { type: 'row', index: 2 }, { type: 'row', index: 3 },
-  { type: 'row', index: 4 },
-  { type: 'col', index: 0 }, { type: 'col', index: 1 },
-  { type: 'col', index: 2 }, { type: 'col', index: 3 },
-  { type: 'col', index: 4 },
-  { type: 'diag', index: 0 }, { type: 'diag', index: 1 }
-];
+const DIAG_DOWN = [0, 6, 12, 18, 24];
+const DIAG_UP = [4, 8, 12, 16, 20];
 
 function getLineName(line: LineSelection): string {
   switch (line.type) {
@@ -29,9 +22,22 @@ function getLineName(line: LineSelection): string {
   }
 }
 
-// Which lines pass through a given cell?
-function getLinesForCell(cellIndex: number): LineSelection[] {
-  return ALL_LINES.filter(line => getLineIndices(line).includes(cellIndex));
+/** Given two cell indices, return the line they share (or null). */
+function getSharedLine(a: number, b: number): LineSelection | null {
+  if (a === b) return null;
+
+  const rowA = Math.floor(a / 5);
+  const rowB = Math.floor(b / 5);
+  if (rowA === rowB) return { type: 'row', index: rowA };
+
+  const colA = a % 5;
+  const colB = b % 5;
+  if (colA === colB) return { type: 'col', index: colA };
+
+  if (DIAG_DOWN.includes(a) && DIAG_DOWN.includes(b)) return { type: 'diag', index: 0 };
+  if (DIAG_UP.includes(a) && DIAG_UP.includes(b)) return { type: 'diag', index: 1 };
+
+  return null;
 }
 
 export function LineSelector({
@@ -39,41 +45,72 @@ export function LineSelector({
   selectedLine,
   isMyTurn,
   partnerHasSelected,
-  disabled = false
+  disabled = false,
 }: LineSelectorProps) {
-  const [hoveredLine, setHoveredLine] = useState<LineSelection | null>(null);
-  const [tappedCell, setTappedCell] = useState<number | null>(null);
+  const [firstTap, setFirstTap] = useState<number | null>(null);
+  const [pendingLine, setPendingLine] = useState<LineSelection | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const canPick = isMyTurn && !selectedLine;
-  const highlightedIndices = hoveredLine ? getLineIndices(hoveredLine) : [];
+  const interactable = canPick && !disabled;
+
+  const pendingIndices = pendingLine ? getLineIndices(pendingLine) : [];
   const selectedIndices = selectedLine ? getLineIndices(selectedLine) : [];
 
+  const reset = useCallback(() => {
+    setFirstTap(null);
+    setPendingLine(null);
+  }, []);
+
+  const flashError = useCallback((msg: string) => {
+    setError(msg);
+    reset();
+    setTimeout(() => setError(null), 1200);
+  }, [reset]);
+
   const handleCellClick = (cellIndex: number) => {
-    if (!canPick || disabled) return;
+    if (!interactable) return;
 
-    const lines = getLinesForCell(cellIndex);
+    // If a line is already pending, tapping a new square changes the second endpoint
+    if (pendingLine) {
+      // Tapping a cell in the pending line keeps it; tapping outside resets to new first tap
+      if (pendingIndices.includes(cellIndex) && cellIndex !== firstTap) {
+        // Still on the same line — no change needed
+        return;
+      }
+      // Start fresh with this cell as new first tap
+      setPendingLine(null);
+      setFirstTap(cellIndex);
+      return;
+    }
 
-    if (lines.length === 1) {
-      // Only one line passes through — select it directly
-      onSelect(lines[0]);
-      setTappedCell(null);
+    // No first tap yet — set it
+    if (firstTap === null) {
+      setFirstTap(cellIndex);
+      return;
+    }
+
+    // Same cell tapped twice — deselect
+    if (cellIndex === firstTap) {
+      reset();
+      return;
+    }
+
+    // Second tap — check for shared line
+    const shared = getSharedLine(firstTap, cellIndex);
+    if (shared) {
+      setPendingLine(shared);
     } else {
-      // Multiple lines — show picker for this cell
-      setTappedCell(tappedCell === cellIndex ? null : cellIndex);
-      setHoveredLine(null);
+      flashError('Those squares don\u2019t share a line');
     }
   };
 
-  const handleLineChoice = (line: LineSelection) => {
-    if (!canPick || disabled) return;
-    onSelect(line);
-    setTappedCell(null);
+  const handleConfirm = () => {
+    if (pendingLine) {
+      onSelect(pendingLine);
+      reset();
+    }
   };
-
-  const tappedLines = tappedCell !== null ? getLinesForCell(tappedCell) : [];
-  const tappedHighlight = tappedCell !== null && tappedLines.length > 0 && !hoveredLine
-    ? getLineIndices(tappedLines[0])
-    : [];
 
   const getStatusMessage = () => {
     if (selectedLine) {
@@ -107,48 +144,55 @@ export function LineSelector({
         <h2 className="text-lg font-semibold text-j-text mb-2 tracking-tight">Pick Your Line</h2>
         <p className="text-j-tertiary text-sm">
           {canPick
-            ? 'Tap a square to select a row, column, or diagonal.'
+            ? firstTap !== null && !pendingLine
+              ? 'Now tap a second square in the same row, column, or diagonal.'
+              : pendingLine
+              ? `${getLineName(pendingLine)} selected — confirm or tap elsewhere to change.`
+              : 'Tap any square to start selecting a line.'
             : 'Your opponent scores when they mark squares in YOUR line.'}
         </p>
       </div>
+
+      {/* Error flash */}
+      {error && (
+        <div className="text-center p-2 bg-j-error/10 rounded-lg border border-j-error/20 animate-fade-in">
+          <p className="text-j-error text-sm font-mono">{error}</p>
+        </div>
+      )}
 
       {/* Interactive grid */}
       <div className="max-w-sm mx-auto">
         <div className="grid grid-cols-5 gap-1.5">
           {Array.from({ length: 25 }, (_, i) => {
-            const isSelected = selectedIndices.includes(i);
-            const isHighlighted = highlightedIndices.includes(i);
-            const isTappedHighlight = tappedHighlight.includes(i);
-            const isTappedCell = tappedCell === i;
+            const isInSelected = selectedIndices.includes(i);
+            const isInPending = pendingIndices.includes(i);
+            const isFirstTap = firstTap === i && !pendingLine;
 
             return (
               <button
                 key={i}
                 onClick={() => handleCellClick(i)}
-                onMouseEnter={() => {
-                  if (!canPick || tappedCell !== null) return;
-                  // On hover, highlight the row this cell is in
-                  const row: LineSelection = { type: 'row', index: Math.floor(i / 5) };
-                  setHoveredLine(row);
-                }}
-                onMouseLeave={() => setHoveredLine(null)}
-                disabled={!canPick || disabled}
+                disabled={!interactable}
                 className={`
                   aspect-square rounded-lg border-2 transition-all duration-150 relative
-                  ${isSelected
+                  ${isInSelected
                     ? 'bg-j-accent/30 border-j-accent'
-                    : isHighlighted || isTappedHighlight
+                    : isInPending
                     ? 'bg-j-accent/15 border-j-accent/50'
-                    : isTappedCell
-                    ? 'bg-j-accent/20 border-j-accent/60'
+                    : isFirstTap
+                    ? 'bg-j-accent/15 border-j-accent/50'
                     : 'bg-j-raised border-white/[0.06]'
                   }
-                  ${canPick && !disabled ? 'cursor-pointer hover:border-j-accent/40' : 'cursor-not-allowed opacity-40'}
+                  ${interactable
+                    ? 'cursor-pointer hover:border-j-accent/40 hover:bg-j-hover'
+                    : 'cursor-not-allowed opacity-40'
+                  }
                 `}
               >
-                {isTappedCell && (
+                {/* Dot on first-tap cell */}
+                {isFirstTap && (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-2 h-2 rounded-full bg-j-accent" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-j-accent" />
                   </div>
                 )}
               </button>
@@ -157,20 +201,15 @@ export function LineSelector({
         </div>
       </div>
 
-      {/* Line chooser popup — shows when tapped cell has multiple lines */}
-      {tappedCell !== null && tappedLines.length > 1 && canPick && (
-        <div className="flex flex-wrap justify-center gap-2 animate-fade-in">
-          {tappedLines.map(line => (
-            <button
-              key={`${line.type}-${line.index}`}
-              onClick={() => handleLineChoice(line)}
-              onMouseEnter={() => setHoveredLine(line)}
-              onMouseLeave={() => setHoveredLine(null)}
-              className="px-4 py-2 rounded-lg text-xs font-mono bg-j-raised text-j-secondary hover:bg-j-accent/15 hover:text-j-accent transition-all border border-white/[0.06] hover:border-j-accent/30"
-            >
-              {getLineName(line)}
-            </button>
-          ))}
+      {/* Confirm button */}
+      {pendingLine && canPick && (
+        <div className="flex justify-center animate-fade-in">
+          <button
+            onClick={handleConfirm}
+            className="px-6 py-2.5 bg-j-accent hover:bg-j-accent-hover text-j-bg font-semibold rounded-xl transition-colors"
+          >
+            Confirm {getLineName(pendingLine)}
+          </button>
         </div>
       )}
 
