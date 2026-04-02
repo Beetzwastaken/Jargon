@@ -44,8 +44,41 @@ e2b3daf switch daily card seed to UTC, drop timezone params
 - Finished phase reveals partner line ✓
 
 ### Next session
-- **Visual browser testing** — start wrangler dev + vite, test full UI flow in two tabs
-- Verify: mark colors, line indicators, scoreboard, game over screen, share card, countdown
-- Fix any UI issues found
-- Merge to main, push, deploy to production
-- Update memory + PROGRESS.md
+- ~~Visual browser testing~~ Done 2026-04-02
+- ~~Fix any UI issues found~~ Done 2026-04-02
+- ~~Merge to main, push, deploy~~ Done 2026-04-02
+
+---
+
+## 2026-04-02 — Bug Fixes, UI Redesign, Logo
+
+### What we did
+- Visual browser tested full duo flow (Playwright, two tabs)
+- Found and fixed 3 bugs:
+  - `getState` marks field `idx` → `index` (partner marks not rendering)
+  - `game_over` winner: sent player name, frontend expected `host`/`partner` role
+  - Final BINGO-triggering mark not broadcast before `game_over`
+  - Bonus: `handleSquareUnmarked` now filters by `markedBy`
+- URL rebranding: `corporate-bingo-ai.netlify.app` → `playjargon.com`
+- **Full UI redesign — "Corporate Satire" theme:**
+  - Fonts: Sora (display) + Space Mono (bingo squares)
+  - Palette: warm amber/gold (#d4a04a) on deep charcoal, replacing generic purple
+  - Player colors: refined teal (#4a9ead) + warm orange (#c67a3c)
+  - New logo: gold J with ghost 5x5 bingo grid overlay, grain texture
+  - All components migrated from `apple-*` to `j-*` design tokens
+  - Tutorial rewritten (removed Solo references)
+  - Solo mode hidden from UI
+- Merged `duo-mode-redesign` → main, deployed
+
+### Commits on main
+```
+be36210 redesign: Corporate Satire theme, new logo, hide solo mode
+8874bc6 fix: partner marks not rendering, winner text inverted, BINGO mark missing
+b49729c rebrand URLs: corporate-bingo-ai.netlify.app → playjargon.com
+```
+
+### Next session
+- Polish pass: remaining old colors in minor components if any surface
+- Test on real phones (iOS Safari, Android Chrome)
+- Share card visual testing
+- Consider: onboarding flow improvements, haptic feedback on mobile
