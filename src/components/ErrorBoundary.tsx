@@ -32,7 +32,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <div className="max-w-md text-center space-y-6">
             <div className="text-4xl">😵</div>
             <h1 className="text-2xl font-semibold">Something went wrong</h1>
-            <p className="text-gray-400 text-sm">
+            <p className="text-j-tertiary text-sm">
               {this.state.error?.message || 'An unexpected error occurred.'}
             </p>
             <button
@@ -41,7 +41,7 @@ export class ErrorBoundary extends Component<Props, State> {
             >
               Reset & Reload
             </button>
-            <p className="text-gray-500 text-xs">
+            <p className="text-j-muted text-xs">
               This will clear your game state and reload the app.
             </p>
           </div>

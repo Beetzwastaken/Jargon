@@ -21,7 +21,8 @@ export function WelcomeTutorial({ show, onComplete }: WelcomeTutorialProps) {
             When someone in the meeting says one — tap it. Complete a line and you win.
           </p>
           <div className="bg-j-raised rounded-lg p-4 text-sm text-j-secondary space-y-2">
-            <p>Pair with a colleague using a 4-character code. Race to complete your secret line first.</p>
+            <p><span className="text-j-me font-medium">Solo</span> — Play on your own during any meeting</p>
+            <p><span className="text-j-accent font-medium">Duo</span> — Pair with a colleague, race to complete your line first</p>
           </div>
         </div>
       )
@@ -32,7 +33,7 @@ export function WelcomeTutorial({ show, onComplete }: WelcomeTutorialProps) {
         <div className="space-y-4">
           <div className="space-y-3">
             {[
-              { num: '1', text: 'Create a game or join with a code' },
+              { num: '1', text: 'Pick Solo or Duo from the home screen' },
               { num: '2', text: 'Open the app when your meeting starts' },
               { num: '3', text: 'Tap buzzwords as you hear them in the meeting' },
               { num: '4', text: 'Complete a full line (row, column, or diagonal) to win' }

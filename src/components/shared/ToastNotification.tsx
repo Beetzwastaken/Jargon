@@ -78,11 +78,11 @@ function ToastItem({ toast, onRemove }: ToastItemProps) {
   const getToastStyles = () => {
     switch (toast.type) {
       case 'success':
-        return 'bg-green-900/90 border-green-500/50 text-green-100';
+        return 'bg-j-success/20 border-j-success/40 text-j-text';
       case 'error':
-        return 'bg-red-900/90 border-red-500/50 text-red-100';
+        return 'bg-j-error/20 border-j-error/40 text-j-text';
       case 'warning':
-        return 'bg-yellow-900/90 border-yellow-500/50 text-yellow-100';
+        return 'bg-j-accent/20 border-j-accent/40 text-j-text';
       case 'score':
         return toast.points && toast.points > 0 
           ? 'bg-j-me/20 border-j-me/40 text-j-text'

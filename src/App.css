@@ -500,14 +500,7 @@ body {
 .text-shadow { text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6); }
 .text-shadow-lg { text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8); }
 
-/* Cyan color overrides — map to player-me */
-.text-cyan-400 { color: var(--j-player-me-strong); }
-.text-cyan-300 { color: var(--j-player-me-strong); }
-.text-cyan-500 { color: var(--j-player-me); }
-.bg-cyan-900\/20 { background-color: rgba(74, 158, 173, 0.12); }
-.bg-cyan-500\/20 { background-color: rgba(74, 158, 173, 0.15); }
-.border-cyan-500\/30 { border-color: rgba(74, 158, 173, 0.3); }
-.border-cyan-500\/50 { border-color: rgba(74, 158, 173, 0.5); }
+/* Legacy cyan overrides removed — all components now use j-* tokens */
 
 /* === COMPACT BUTTONS === */
 .room-type-compact-button {
