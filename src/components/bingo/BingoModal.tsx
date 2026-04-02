@@ -77,8 +77,8 @@ export function BingoModal({
     <>
       <div className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm z-[1000]" onClick={onCancel} />
 
-      <div className="fixed top-1/3 left-1/2 transform -translate-x-1/2 z-[1001] animate-fade-in-up w-full max-w-md px-4">
-        <div className="bg-j-surface border border-j-accent/40 rounded-2xl shadow-2xl p-6 sm:p-8">
+      <div className="fixed top-1/4 inset-x-0 z-[1001] animate-fade-in-up px-4 flex justify-center">
+        <div className="bg-j-surface border border-j-accent/40 rounded-2xl shadow-2xl p-6 sm:p-8 w-full max-w-md">
           <div className="text-center mb-6">
             <h2 className="text-4xl font-bold text-j-accent tracking-wider">
               🎉 {isDuoMode ? getDuoTitle() : 'BINGO!'} 🎉
