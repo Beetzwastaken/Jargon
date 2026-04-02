@@ -167,7 +167,7 @@ export const useSoloStore = create<SoloStore>()(
           set({
             dailyCard: newCard,
             markedSquares: Array(25).fill(false),
-            currentDateSeed: seed,
+            currentDateSeed: String(seed),
             score: 0,
             hasBingo: false,
             winningLine: null,
