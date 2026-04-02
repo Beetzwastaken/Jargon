@@ -8,7 +8,6 @@ import { ModeSelector } from './components/ModeSelector';
 import { SoloGame } from './components/SoloGame';
 import { useDuoStore, regenerateDailyCardIfNeeded } from './stores/duoStore';
 import { useConnectionStore } from './stores/connectionStore';
-import { APP_VERSION } from './utils/version';
 import { ToastContainer, showGameToast } from './components/shared/ToastNotification';
 import './App.css';
 
@@ -218,9 +217,6 @@ function App() {
                 </svg>
               </button>
 
-              <div className="text-xs text-j-muted font-mono">
-                v{APP_VERSION}
-              </div>
             </div>
           </div>
         </div>
