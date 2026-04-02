@@ -162,9 +162,13 @@ function handleWebSocketMessage(message: DuoWebSocketMessage): void {
       }
       break;
 
-    case DUO_MESSAGE_TYPES.PARTNER_LEFT:
-      duoStore.handlePartnerLeft();
+    case DUO_MESSAGE_TYPES.PARTNER_LEFT: {
+      const ds = useDuoStore.getState();
+      // If the host left, room is destroyed — fully reset the partner
+      const hostLeft = ds.isHost === false;
+      duoStore.handlePartnerLeft(hostLeft);
       break;
+    }
 
     case DUO_MESSAGE_TYPES.YOUR_TURN_TO_PICK:
       duoStore.handleYourTurnToPick();

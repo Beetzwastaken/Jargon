@@ -96,7 +96,7 @@ interface DuoActions {
   // Sync handlers
   syncState: (state: Partial<DuoState>) => void;
   handlePartnerJoined: (partner: { id: string; name: string }) => void;
-  handlePartnerLeft: () => void;
+  handlePartnerLeft: (roomDestroyed?: boolean) => void;
   handleYourTurnToPick: () => void;
   handleBothSelected: () => void;
   handleSquareMarked: (index: number, markedBy: string, myScore: number, partnerScore: number) => void;
@@ -290,22 +290,33 @@ export const useDuoStore = create<DuoStore>()(
         },
 
         // Handle partner left
-        handlePartnerLeft: () => {
-          set({
-            partnerId: null,
-            partnerName: null,
-            isPaired: false,
-            phase: 'waiting',
-            myLine: null,
-            isMyTurnToPick: false,
-            partnerHasSelected: false,
-            partnerLine: null,
-            marks: [],
-            myScore: 0,
-            partnerScore: 0,
-            gameOver: false,
-            winner: null,
-          });
+        handlePartnerLeft: (roomDestroyed?: boolean) => {
+          if (roomDestroyed) {
+            // Host left — room is destroyed, fully reset to unpaired
+            useConnectionStore.getState().disconnect();
+            set({
+              ...initialState,
+              dailyCard: get().dailyCard,
+              dailySeed: get().dailySeed,
+            });
+          } else {
+            // Partner left — room still exists, go back to waiting
+            set({
+              partnerId: null,
+              partnerName: null,
+              isPaired: false,
+              phase: 'waiting',
+              myLine: null,
+              isMyTurnToPick: false,
+              partnerHasSelected: false,
+              partnerLine: null,
+              marks: [],
+              myScore: 0,
+              partnerScore: 0,
+              gameOver: false,
+              winner: null,
+            });
+          }
         },
 
         // Handle your turn to pick
