@@ -30,6 +30,7 @@ interface SoloActions {
   initializeCard: () => void;
   markSquare: (index: number) => void;
   resetForNewDay: () => void;
+  shuffleNewCard: () => void;
 }
 
 type SoloStore = SoloState & SoloActions;
@@ -141,6 +142,22 @@ export const useSoloStore = create<SoloStore>()(
             dailyCard: newCard,
             markedSquares: Array(25).fill(false),
             currentDateSeed: today,
+            score: 0,
+            hasBingo: false,
+            winningLine: null,
+            gamesPlayed: state.gamesPlayed + 1
+          });
+        },
+
+        shuffleNewCard: () => {
+          const state = get();
+          const seed = `${Date.now()}-${Math.random()}`;
+          const newCard = generateDailyCard(seed);
+
+          set({
+            dailyCard: newCard,
+            markedSquares: Array(25).fill(false),
+            currentDateSeed: seed,
             score: 0,
             hasBingo: false,
             winningLine: null,

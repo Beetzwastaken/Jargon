@@ -18,7 +18,8 @@ export function SoloGame({ onBack }: SoloGameProps) {
     totalScore,
     gamesPlayed,
     initializeCard,
-    markSquare
+    markSquare,
+    shuffleNewCard
   } = useSoloStore();
 
   const [showBingoModal, setShowBingoModal] = useState(false);
@@ -92,6 +93,16 @@ export function SoloGame({ onBack }: SoloGameProps) {
                     </p>
                     <p className="text-2xl font-bold text-j-me">{gamesPlayed}</p>
                   </div>
+                </div>
+
+                {/* New Card button */}
+                <div className="mb-4 text-center">
+                  <button
+                    onClick={shuffleNewCard}
+                    className="px-4 py-2 bg-j-raised hover:bg-j-hover border border-white/[0.06] text-j-secondary hover:text-j-text rounded-lg transition-colors text-xs font-mono"
+                  >
+                    Shuffle New Card
+                  </button>
                 </div>
 
                 {/* Bingo Card */}
