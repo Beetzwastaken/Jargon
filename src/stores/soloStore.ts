@@ -21,6 +21,7 @@ interface SoloState {
   currentDateSeed: string;
   score: number;
   hasBingo: boolean;
+  bingoAwarded: boolean; // true once bingo bonus has been given this game
   winningLine: WinningLine | null;
   gamesPlayed: number;
   totalScore: number;
@@ -41,6 +42,7 @@ const initialState: SoloState = {
   currentDateSeed: '',
   score: 0,
   hasBingo: false,
+  bingoAwarded: false,
   winningLine: null,
   gamesPlayed: 0,
   totalScore: 0
@@ -66,6 +68,7 @@ export const useSoloStore = create<SoloStore>()(
               currentDateSeed: today,
               score: 0,
               hasBingo: false,
+              bingoAwarded: false,
               winningLine: null,
               gamesPlayed: state.gamesPlayed + 1
             });
@@ -78,6 +81,7 @@ export const useSoloStore = create<SoloStore>()(
               currentDateSeed: today,
               score: 0,
               hasBingo: false,
+              bingoAwarded: false,
               winningLine: null,
               gamesPlayed: state.gamesPlayed || 1
             });
@@ -86,20 +90,14 @@ export const useSoloStore = create<SoloStore>()(
 
         markSquare: (index: number) => {
           const state = get();
-
           if (index < 0 || index >= 25) return;
-          // Once bingo is confirmed, no more scoring changes
-          if (state.hasBingo) return;
+
           const newMarked = [...state.markedSquares];
           newMarked[index] = !newMarked[index];
 
-          // +1 for marking, -1 for unmarking (floor at 0)
-          let newScore = Math.max(0, state.score + (newMarked[index] ? 1 : -1));
+          // Check for any completed line
           let newBingo = false;
           let newWinningLine: WinningLine | null = null;
-          const hadBingo = state.hasBingo;
-
-          // Check all 12 possible lines
           const linesToCheck: WinningLine[] = [
             { type: 'row', index: 0 }, { type: 'row', index: 1 },
             { type: 'row', index: 2 }, { type: 'row', index: 3 },
@@ -114,21 +112,29 @@ export const useSoloStore = create<SoloStore>()(
             if (isLineComplete(newMarked, line)) {
               newBingo = true;
               newWinningLine = line;
-              if (!hadBingo) newScore += 5; // Bonus only on first bingo
               break;
             }
           }
 
-          // Score delta for totalScore: +1 mark, -1 unmark, +6 first bingo
-          const delta = newMarked[index] ? 1 : -1;
-          const bingoBonus = (newBingo && !hadBingo) ? 5 : 0;
+          // Bingo bonus awarded exactly once per game — persists even if line is broken
+          const newBingoAwarded = state.bingoAwarded || newBingo;
+
+          // Score = marked count + one-time bonus
+          const markedCount = newMarked.filter(Boolean).length;
+          const newScore = markedCount + (newBingoAwarded ? 5 : 0);
+
+          // Total score delta
+          const prevMarkedCount = state.markedSquares.filter(Boolean).length;
+          const markDelta = markedCount - prevMarkedCount;
+          const bonusDelta = (!state.bingoAwarded && newBingoAwarded) ? 5 : 0;
 
           set({
             markedSquares: newMarked,
             score: newScore,
             hasBingo: newBingo,
+            bingoAwarded: newBingoAwarded,
             winningLine: newWinningLine,
-            totalScore: Math.max(0, state.totalScore + delta + bingoBonus)
+            totalScore: Math.max(0, state.totalScore + markDelta + bonusDelta)
           });
         },
 
