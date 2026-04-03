@@ -381,12 +381,12 @@ function App() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-j-me">{odName || 'You'}</span>
-                    <span className="text-j-me font-bold">{myScore}/5</span>
+                    <span className="text-j-me font-bold">{myScore} pts</span>
                   </div>
                   {partnerName && (
                     <div className="flex items-center justify-between">
                       <span className="text-j-partner">{partnerName}</span>
-                      <span className="text-j-partner font-bold">{partnerScore}/5</span>
+                      <span className="text-j-partner font-bold">{partnerScore} pts</span>
                     </div>
                   )}
                 </div>
@@ -396,9 +396,10 @@ function App() {
               <div className="apple-panel p-4">
                 <h3 className="text-sm font-medium text-j-secondary mb-3">Scoring</h3>
                 <ul className="text-xs text-j-tertiary space-y-1">
-                  <li>Your score = opponent's line squares you marked</li>
-                  <li>5/5 = BINGO (early win)</li>
-                  <li>New card at UTC midnight</li>
+                  <li>+1 per square you mark</li>
+                  <li>+3 per bingo line you complete</li>
+                  <li>Bonus Bingo (opponent's line) = instant win</li>
+                  <li>No Bonus Bingo? Highest score at midnight wins</li>
                 </ul>
               </div>
 

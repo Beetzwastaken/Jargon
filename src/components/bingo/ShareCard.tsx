@@ -41,7 +41,7 @@ export function ShareCard({ onClose }: ShareCardProps) {
   const shareText = [
     `Jargon Duo - ${dailySeed}`,
     '',
-    `${odName || 'Me'}: ${myScore}/5 | ${partnerName || 'Partner'}: ${partnerScore}/5`,
+    `${odName || 'Me'}: ${myScore} pts | ${partnerName || 'Partner'}: ${partnerScore} pts`,
     getWinnerText(),
     '',
     buildGrid(),

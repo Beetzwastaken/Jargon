@@ -22,7 +22,7 @@ export function WelcomeTutorial({ show, onComplete }: WelcomeTutorialProps) {
           </p>
           <div className="bg-j-raised rounded-lg p-4 text-sm text-j-secondary space-y-2">
             <p><span className="text-j-me font-medium">Solo</span> — Play on your own during any meeting</p>
-            <p><span className="text-j-accent font-medium">Duo</span> — Pair with a colleague, race to complete your line first</p>
+            <p><span className="text-j-accent font-medium">Duo</span> — Pair with a colleague, mark buzzwords, hunt their secret line</p>
           </div>
         </div>
       )
@@ -59,9 +59,10 @@ export function WelcomeTutorial({ show, onComplete }: WelcomeTutorialProps) {
       content: (
         <div className="space-y-4">
           <p className="text-j-secondary">
-            You and a partner get the same card. Each of you secretly picks a line
-            to complete. Your opponent scores when they mark squares in YOUR line.
-            First to 5 wins.
+            You and a partner get the same card. Each of you secretly picks a line.
+            Score points by marking squares (+1 each) and completing bingo lines (+3 each).
+            Complete your opponent's secret line for a Bonus Bingo — instant win!
+            No Bonus Bingo by midnight? Highest score wins.
           </p>
           <div className="bg-j-raised rounded-lg p-4 text-sm text-j-secondary space-y-2">
             <p>Create a room and share the 4-character code</p>
