@@ -139,15 +139,6 @@ export function BingoCard({
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* BINGO Header */}
-      <div className="bingo-header">
-        {['B', 'I', 'N', 'G', 'O'].map((letter) => (
-          <div key={letter} className="bingo-letter">
-            {letter}
-          </div>
-        ))}
-      </div>
-
       {/* Legend — host always teal, partner always amber */}
       <div className="flex flex-wrap justify-center gap-4 mb-4 text-xs font-mono">
         <div className="flex items-center gap-1.5">
