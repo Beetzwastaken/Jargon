@@ -36,6 +36,7 @@ function App() {
     odName,
     partnerName,
     isPaired,
+    isHost,
     myLine,
     dailyCard,
     marks,
@@ -330,6 +331,7 @@ function App() {
                   myPlayerId={odId || ''}
                   marks={marks}
                   myLineIndices={getMyLineIndices()}
+                  isHost={isHost}
                   phase="playing"
                 />
               </>
@@ -348,6 +350,7 @@ function App() {
                       myPlayerId={odId || ''}
                       marks={marks}
                       myLineIndices={getMyLineIndices()}
+                      isHost={isHost}
                       phase="finished"
                       partnerLineIndices={getPartnerLineIndices()}
                     />

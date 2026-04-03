@@ -11,6 +11,7 @@ interface BingoCardProps {
   phase: 'playing' | 'finished';
   partnerLineIndices?: number[];
   hasBingo?: boolean;
+  isHost?: boolean; // true = host (teal), false = partner (amber), undefined = solo
 }
 
 export function BingoCard({
@@ -22,7 +23,11 @@ export function BingoCard({
   phase,
   partnerLineIndices = [],
   hasBingo = false,
+  isHost,
 }: BingoCardProps) {
+  // Host always teal (marked-mine), partner always amber (marked-partner)
+  // If I'm the partner, swap: my marks get amber, opponent's marks get teal
+  const iAmPartner = isHost === false;
   const gridRef = useRef<HTMLDivElement>(null);
 
   const getMarkInfo = (index: number) => {
@@ -46,13 +51,13 @@ export function BingoCard({
       classes += ' ring-1 ring-j-partner/40';
     }
 
-    // Mark colors
+    // Mark colors — host always teal, partner always amber
     if (myMark && partnerMark) {
       classes += ' marked';
     } else if (myMark) {
-      classes += ' marked marked-mine';
+      classes += iAmPartner ? ' marked marked-partner' : ' marked marked-mine';
     } else if (partnerMark) {
-      classes += ' marked marked-partner';
+      classes += iAmPartner ? ' marked marked-mine' : ' marked marked-partner';
     }
 
     if (hasBingo && (myMark || partnerMark)) {
@@ -143,15 +148,15 @@ export function BingoCard({
         ))}
       </div>
 
-      {/* Legend */}
+      {/* Legend — host always teal, partner always amber */}
       <div className="flex flex-wrap justify-center gap-4 mb-4 text-xs font-mono">
         <div className="flex items-center gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-sm bg-j-me/70"></div>
-          <span className="text-j-me">Your marks</span>
+          <div className={`w-2.5 h-2.5 rounded-sm ${iAmPartner ? 'bg-j-partner/70' : 'bg-j-me/70'}`}></div>
+          <span className={iAmPartner ? 'text-j-partner' : 'text-j-me'}>Your marks</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-2.5 h-2.5 rounded-sm bg-j-partner/70"></div>
-          <span className="text-j-partner">Partner marks</span>
+          <div className={`w-2.5 h-2.5 rounded-sm ${iAmPartner ? 'bg-j-me/70' : 'bg-j-partner/70'}`}></div>
+          <span className={iAmPartner ? 'text-j-me' : 'text-j-partner'}>Partner marks</span>
         </div>
         {phase === 'finished' && (
           <>
@@ -191,18 +196,18 @@ export function BingoCard({
               tabIndex={index === 0 ? 0 : -1}
               disabled={phase === 'finished'}
             >
-              {/* Checkmark overlay */}
+              {/* Checkmark overlay — host=teal, partner=amber */}
               {(myMark || partnerMark) && (
                 <div className="absolute top-0.5 right-0.5 z-10 flex gap-0.5">
                   {myMark && (
-                    <div className="w-3.5 h-3.5 bg-j-me rounded-full flex items-center justify-center shadow-sm">
+                    <div className={`w-3.5 h-3.5 ${iAmPartner ? 'bg-j-partner' : 'bg-j-me'} rounded-full flex items-center justify-center shadow-sm`}>
                       <svg className="w-2 h-2 text-j-bg" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
                     </div>
                   )}
                   {partnerMark && (
-                    <div className="w-3.5 h-3.5 bg-j-partner rounded-full flex items-center justify-center shadow-sm">
+                    <div className={`w-3.5 h-3.5 ${iAmPartner ? 'bg-j-me' : 'bg-j-partner'} rounded-full flex items-center justify-center shadow-sm`}>
                       <svg className="w-2 h-2 text-j-bg" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>

@@ -178,9 +178,9 @@ export function LineSelector({
                   ${isInSelected
                     ? 'bg-j-accent/30 border-j-accent'
                     : isInPending
-                    ? 'bg-j-accent/15 border-j-accent/50'
+                    ? 'bg-j-accent/25 border-j-accent/70'
                     : isFirstTap
-                    ? 'bg-j-accent/15 border-j-accent/50'
+                    ? 'bg-j-accent/20 border-j-accent/50'
                     : 'bg-j-raised border-white/[0.06]'
                   }
                   ${interactable
