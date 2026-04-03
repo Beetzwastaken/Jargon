@@ -1009,10 +1009,18 @@ export class BingoRoom {
     if (room.phase === 'finished') {
       response.myLine = isHost ? room.host_line : room.partner_line;
       response.partnerLine = isHost ? room.partner_line : room.host_line;
-      // Determine winner
-      if (scores.hostScore >= 5) response.winner = 'host';
-      else if (scores.partnerScore >= 5) response.winner = 'partner';
-      else response.winner = null;
+      // Determine winner — bonus bingo or highest score
+      if (this.checkBonusBingo(room.host_id, room)) {
+        response.winner = 'host';
+      } else if (this.checkBonusBingo(room.partner_id, room)) {
+        response.winner = 'partner';
+      } else if (scores.hostScore > scores.partnerScore) {
+        response.winner = 'host';
+      } else if (scores.partnerScore > scores.hostScore) {
+        response.winner = 'partner';
+      } else {
+        response.winner = 'tie';
+      }
     }
 
     return new Response(JSON.stringify(response), {
@@ -1026,8 +1034,18 @@ export class BingoRoom {
       const scores = this.computeScores(room);
       const allMarks = this.getMarks();
       let winner = null;
-      if (scores.hostScore >= 5) winner = room.host_name;
-      else if (scores.partnerScore >= 5) winner = room.partner_name;
+
+      // Check bonus bingo first, then score
+      if (this.checkBonusBingo(room.host_id, room)) {
+        winner = room.host_name;
+      } else if (this.checkBonusBingo(room.partner_id, room)) {
+        winner = room.partner_name;
+      } else if (scores.hostScore > scores.partnerScore) {
+        winner = room.host_name;
+      } else if (scores.partnerScore > scores.hostScore) {
+        winner = room.partner_name;
+      }
+      // else: tie, winner stays null
 
       this.sql.exec(
         `INSERT OR IGNORE INTO snapshots (date, host_id, host_name, partner_id, partner_name, host_score, partner_score, winner, host_line, partner_line, marks_json)
