@@ -880,17 +880,14 @@ export class BingoRoom {
       index, playerId, Date.now()
     );
 
-    // Determine if hit (marked index is on opponent's line)
-    const opponentLine = isHost ? room.partner_line : room.host_line;
-    const opponentIndices = getLineIndices(opponentLine);
-    const hit = opponentIndices.includes(index);
+    // Check bonus bingo (completed opponent's secret line = instant win)
+    const bonusBingo = this.checkBonusBingo(playerId, room);
 
     const scores = this.computeScores(room);
     const myScore = isHost ? scores.hostScore : scores.partnerScore;
     const partnerScoreVal = isHost ? scores.partnerScore : scores.hostScore;
 
-    // Check BINGO (score = 5)
-    if (myScore >= 5) {
+    if (bonusBingo) {
       // Broadcast the final mark before game_over so partner sees it
       this.broadcastToRoom({
         type: 'square_marked',
@@ -903,14 +900,13 @@ export class BingoRoom {
       this.updateRoom({ phase: 'finished', last_activity: Date.now() });
 
       // Store snapshot
-      const winnerName = isHost ? room.host_name : room.partner_name;
       const winnerRole = isHost ? 'host' : 'partner';
       const allMarks = this.getMarks();
       this.sql.exec(
         `INSERT OR REPLACE INTO snapshots (date, host_id, host_name, partner_id, partner_name, host_score, partner_score, winner, host_line, partner_line, marks_json)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         room.daily_seed, room.host_id, room.host_name, room.partner_id, room.partner_name,
-        scores.hostScore, scores.partnerScore, winnerName,
+        scores.hostScore, scores.partnerScore, isHost ? room.host_name : room.partner_name,
         JSON.stringify(room.host_line), JSON.stringify(room.partner_line),
         JSON.stringify(allMarks)
       );
@@ -921,15 +917,16 @@ export class BingoRoom {
         hostScore: scores.hostScore,
         partnerScore: scores.partnerScore,
         hostLine: room.host_line,
-        partnerLine: room.partner_line
+        partnerLine: room.partner_line,
+        bonusBingo: true
       });
 
       return new Response(JSON.stringify({
         success: true,
-        hit,
         myScore,
         partnerScore: partnerScoreVal,
-        gameOver: true
+        gameOver: true,
+        bonusBingo: true
       }), {
         headers: { 'Content-Type': 'application/json' }
       });
@@ -948,7 +945,6 @@ export class BingoRoom {
 
     return new Response(JSON.stringify({
       success: true,
-      hit,
       myScore,
       partnerScore: partnerScoreVal,
       gameOver: false
