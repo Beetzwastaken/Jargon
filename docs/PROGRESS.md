@@ -78,7 +78,52 @@ b49729c rebrand URLs: corporate-bingo-ai.netlify.app → playjargon.com
 ```
 
 ### Next session
-- Polish pass: remaining old colors in minor components if any surface
+- ~~Polish pass~~ Done later in session
+
+---
+
+## 2026-04-02 (cont.) — Solo fixes, UI polish, buzzword curation, gameplay redesign spec
+
+### What we did
+- Re-enabled solo mode for UI testing
+- Fixed solo scoring bugs:
+  - Bingo bonus awarded repeatedly → now exactly once via `bingoAwarded` flag
+  - Board locked after bingo → removed, players can keep marking
+  - Score derived from marked count, not incremental (prevents manipulation)
+- Fixed bingo modal cutoff on mobile (overflow from `left-1/2 translate` → `inset-x-0`)
+- Fixed shuffle new card not working (seed passed as string to date parser → added `generateRandomCard` with numeric seed, fixed `initializeCard` clobbering shuffled cards)
+- Scrubbed ALL remaining off-brand colors (toasts, error boundary, connection indicator)
+- Updated tutorial to mention both Solo and Duo
+- Removed legacy cyan CSS mappings
+- Curated buzzword list: 172 → 151 phrases
+  - Removed generic/redundant/dated terms
+  - Added bracket notation for observable moments: `[Heavy Breathing Into Mic]`
+  - Added 11 new phrases
+  - Deleted stale `buzzwords.js` (Vite was importing it over `.ts`)
+- Fixed worker importing `buzzwords.js` instead of `.ts`
+- Redesigned line selector: two-tap on grid + confirm button (replaced text buttons)
+- Removed version display from header
+- Removed BINGO header from card
+- Logo: embedded Sora font as inline React SVG component (guaranteed font match)
+- Player colors: host always teal, partner always amber (role-based, not perspective-based)
+- Fixed partner stuck on "waiting" when host leaves (full reset to unpaired)
+- Service worker: bumped cache version, force update on page load, fixed Netlify cache headers
+- CSP updated for Google Fonts
+- Netlify: hashed assets set to immutable, sw.js set to no-cache
+- Added GitHub Action for auto-deploying worker on push to main
+- **Brainstormed duo gameplay redesign:**
+  - Traditional bingo lines now award +3 points
+  - Pick 5 secret squares (anywhere) instead of a line
+  - +2 per opponent hit on your secrets
+  - +1 per square marked
+  - Game runs until UTC midnight, most points wins
+  - Spec written: `docs/superpowers/specs/2026-04-02-duo-gameplay-redesign.md`
+
+### Next session
+- Review gameplay redesign spec
+- Write implementation plan (invoke writing-plans skill)
+- Implement the redesign
+- Add Cloudflare API token to GitHub secrets for auto-deploy
 - Test on real phones (iOS Safari, Android Chrome)
 - Share card visual testing
 - Consider: onboarding flow improvements, haptic feedback on mobile
