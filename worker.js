@@ -485,19 +485,21 @@ export class BingoRoom {
   }
 
   computeScore(playerId, room) {
-    // Score = count of marks made by this player that fall on OPPONENT's line
+    // Score = squares this player marked + (completed bingo lines × 3)
+    const marks = this.getMarks();
+    const myMarks = marks.filter(m => m.marked_by === playerId).length;
+    const completedLines = countCompletedLines(marks);
+    return myMarks + (completedLines * 3);
+  }
+
+  // Check if player completed opponent's secret line (bonus bingo = instant win)
+  checkBonusBingo(playerId, room) {
     const isHost = playerId === room.host_id;
     const opponentLine = isHost ? room.partner_line : room.host_line;
-    if (!opponentLine) return 0;
+    if (!opponentLine) return false;
     const lineIndices = getLineIndices(opponentLine);
     const marks = this.getMarks();
-    let score = 0;
-    for (const mark of marks) {
-      if (mark.marked_by === playerId && lineIndices.includes(mark.idx)) {
-        score++;
-      }
-    }
-    return score;
+    return lineIndices.every(idx => marks.some(m => m.idx === idx));
   }
 
   computeScores(room) {
