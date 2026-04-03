@@ -139,6 +139,41 @@ export function isSquareInLine(squareIndex: number, line: { type: 'row' | 'col' 
   return getLineIndices(line).includes(squareIndex);
 }
 
+/** All 12 possible bingo lines on a 5x5 grid */
+export const ALL_LINES: Array<{ type: 'row' | 'col' | 'diag'; index: number }> = [
+  { type: 'row', index: 0 }, { type: 'row', index: 1 }, { type: 'row', index: 2 },
+  { type: 'row', index: 3 }, { type: 'row', index: 4 },
+  { type: 'col', index: 0 }, { type: 'col', index: 1 }, { type: 'col', index: 2 },
+  { type: 'col', index: 3 }, { type: 'col', index: 4 },
+  { type: 'diag', index: 0 }, { type: 'diag', index: 1 }
+];
+
+/** Count how many bingo lines are fully completed (all 5 squares marked by anyone) */
+export function countCompletedLines(markedIndices: number[]): number {
+  const markedSet = new Set(markedIndices);
+  let count = 0;
+  for (const line of ALL_LINES) {
+    const indices = getLineIndices(line);
+    if (indices.every(idx => markedSet.has(idx))) {
+      count++;
+    }
+  }
+  return count;
+}
+
+/** Get indices of all completed bingo lines (for highlighting) */
+export function getCompletedLineIndices(markedIndices: number[]): number[][] {
+  const markedSet = new Set(markedIndices);
+  const completed: number[][] = [];
+  for (const line of ALL_LINES) {
+    const indices = getLineIndices(line);
+    if (indices.every(idx => markedSet.has(idx))) {
+      completed.push(indices);
+    }
+  }
+  return completed;
+}
+
 /**
  * Count how many squares in a line are marked
  */
