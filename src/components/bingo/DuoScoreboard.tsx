@@ -29,20 +29,22 @@ export function DuoScoreboard() {
       <div className="grid grid-cols-2 gap-3">
         <div className={`rounded-lg p-3 ${leader === 'you' ? 'bg-j-me/15 ring-1 ring-j-me/40' : 'bg-j-raised'}`}>
           <span className="text-j-me font-medium text-xs truncate block mb-1">{odName || 'You'}</span>
-          <div className="text-2xl font-bold text-j-me font-mono">{myScore}/5</div>
+          <div className="text-2xl font-bold text-j-me font-mono">{myScore}</div>
         </div>
 
         <div className={`rounded-lg p-3 ${leader === 'partner' ? 'bg-j-partner/15 ring-1 ring-j-partner/40' : 'bg-j-raised'}`}>
           <span className="text-j-partner font-medium text-xs truncate block mb-1">{partnerName || 'Partner'}</span>
-          <div className="text-2xl font-bold text-j-partner font-mono">{partnerScore}/5</div>
+          <div className="text-2xl font-bold text-j-partner font-mono">{partnerScore}</div>
         </div>
       </div>
 
       {/* Scoring Info */}
       <div className="text-[10px] text-j-muted text-center font-mono">
-        <span>Score = opponent's line squares YOU marked</span>
-        <span className="mx-1">|</span>
-        <span>5/5 = BINGO</span>
+        <span>+1 per mark</span>
+        <span className="mx-1">·</span>
+        <span>+3 per bingo line</span>
+        <span className="mx-1">·</span>
+        <span>Bonus bingo = instant win</span>
       </div>
     </div>
   );
