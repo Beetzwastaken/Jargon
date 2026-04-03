@@ -87,6 +87,27 @@ function getLineIndices(line) {
   }
 }
 
+// All 12 possible bingo lines
+const ALL_LINES = [
+  { type: 'row', index: 0 }, { type: 'row', index: 1 }, { type: 'row', index: 2 },
+  { type: 'row', index: 3 }, { type: 'row', index: 4 },
+  { type: 'col', index: 0 }, { type: 'col', index: 1 }, { type: 'col', index: 2 },
+  { type: 'col', index: 3 }, { type: 'col', index: 4 },
+  { type: 'diag', index: 0 }, { type: 'diag', index: 1 }
+];
+
+// Count how many bingo lines are fully marked (by either player — marks are shared)
+function countCompletedLines(marks) {
+  const markedSet = new Set(marks.map(m => m.idx));
+  let count = 0;
+  for (const line of ALL_LINES) {
+    const indices = getLineIndices(line);
+    if (indices.every(idx => markedSet.has(idx))) {
+      count++;
+    }
+  }
+  return count;
+}
 
 // Main Worker
 export default {
