@@ -73,6 +73,7 @@ interface DuoState {
   myScore: number;
   partnerScore: number;
   gameOver: boolean;
+  bonusBingo: boolean;
   winner: 'me' | 'partner' | 'tie' | null;
   partnerLine: LineSelection | null; // only in finished phase
 
@@ -101,7 +102,7 @@ interface DuoActions {
   handleBothSelected: () => void;
   handleSquareMarked: (index: number, markedBy: string, myScore: number, partnerScore: number) => void;
   handleSquareUnmarked: (index: number, markedBy: string | undefined, myScore: number, partnerScore: number) => void;
-  handleGameOver: (winner: string, myScore: number, partnerScore: number, hostLine: LineSelection, partnerLine: LineSelection) => void;
+  handleGameOver: (winner: string, myScore: number, partnerScore: number, hostLine: LineSelection, partnerLine: LineSelection, bonusBingo?: boolean) => void;
   handleDailyReset: (newSeed: string) => void;
 
   // Utilities
@@ -136,6 +137,7 @@ const initialState: DuoState = {
   myScore: 0,
   partnerScore: 0,
   gameOver: false,
+  bonusBingo: false,
   winner: null,
   partnerLine: null,
 
@@ -362,7 +364,7 @@ export const useDuoStore = create<DuoStore>()(
         },
 
         // Handle game over
-        handleGameOver: (winner: string, myScore: number, partnerScore: number, hostLine: LineSelection, partnerLine: LineSelection) => {
+        handleGameOver: (winner: string, myScore: number, partnerScore: number, hostLine: LineSelection, partnerLine: LineSelection, bonusBingo?: boolean) => {
           const state = get();
           const isHost = state.isHost;
           const myLine = isHost ? hostLine : partnerLine;
@@ -384,6 +386,7 @@ export const useDuoStore = create<DuoStore>()(
           set({
             phase: 'finished',
             gameOver: true,
+            bonusBingo: bonusBingo ?? false,
             winner: winnerValue,
             myScore,
             partnerScore,
@@ -407,6 +410,7 @@ export const useDuoStore = create<DuoStore>()(
             myScore: 0,
             partnerScore: 0,
             gameOver: false,
+            bonusBingo: false,
             winner: null,
             snapshot: null,
             phase: state.isPaired ? 'selecting' : 'unpaired',

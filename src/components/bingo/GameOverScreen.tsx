@@ -10,6 +10,7 @@ export function GameOverScreen() {
     myScore,
     partnerScore,
     winner,
+    bonusBingo,
     dailySeed,
   } = useDuoStore();
 
@@ -36,8 +37,8 @@ export function GameOverScreen() {
 
   const getWinnerText = () => {
     if (winner === 'tie') return "It's a tie!";
-    if (winner === 'me') return 'You win!';
-    return `${partnerName || 'Partner'} wins!`;
+    if (winner === 'me') return bonusBingo ? 'Bonus Bingo! You win!' : 'You win!';
+    return bonusBingo ? `Bonus Bingo! ${partnerName || 'Partner'} wins!` : `${partnerName || 'Partner'} wins!`;
   };
 
   const getWinnerEmoji = () => {
@@ -60,11 +61,11 @@ export function GameOverScreen() {
         <div className="grid grid-cols-2 gap-3">
           <div className={`rounded-xl p-5 transition-all ${winner === 'me' || winner === 'tie' ? 'bg-j-me/15 ring-1 ring-j-me/40' : 'bg-j-raised'}`}>
             <p className="text-j-me font-medium text-xs mb-1 truncate">{odName || 'You'}</p>
-            <p className="text-4xl font-bold text-j-me font-mono">{myScore}/5</p>
+            <p className="text-4xl font-bold text-j-me font-mono">{myScore} pts</p>
           </div>
           <div className={`rounded-xl p-5 transition-all ${winner === 'partner' || winner === 'tie' ? 'bg-j-partner/15 ring-1 ring-j-partner/40' : 'bg-j-raised'}`}>
             <p className="text-j-partner font-medium text-xs mb-1 truncate">{partnerName || 'Partner'}</p>
-            <p className="text-4xl font-bold text-j-partner font-mono">{partnerScore}/5</p>
+            <p className="text-4xl font-bold text-j-partner font-mono">{partnerScore} pts</p>
           </div>
         </div>
 

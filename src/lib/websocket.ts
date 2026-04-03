@@ -18,6 +18,7 @@ export interface DuoWebSocketMessage {
   winner?: string;
   hostLine?: { type: 'row' | 'col' | 'diag'; index: number };
   partnerLine?: { type: 'row' | 'col' | 'diag'; index: number };
+  bonusBingo?: boolean;
   // Daily reset
   newSeed?: string;
   // Connection state

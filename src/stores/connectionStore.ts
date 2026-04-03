@@ -204,7 +204,7 @@ function handleWebSocketMessage(message: DuoWebSocketMessage): void {
         const isHost = ds.isHost;
         const myScore = isHost ? (message.hostScore ?? ds.myScore) : (message.partnerScore ?? ds.myScore);
         const partnerScore = isHost ? (message.partnerScore ?? ds.partnerScore) : (message.hostScore ?? ds.partnerScore);
-        duoStore.handleGameOver(message.winner, myScore, partnerScore, message.hostLine, message.partnerLine);
+        duoStore.handleGameOver(message.winner, myScore, partnerScore, message.hostLine, message.partnerLine, message.bonusBingo ?? false);
       }
       break;
 
