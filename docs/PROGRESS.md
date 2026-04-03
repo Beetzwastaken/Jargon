@@ -122,8 +122,40 @@ b49729c rebrand URLs: corporate-bingo-ai.netlify.app → playjargon.com
 ### Next session
 - Review gameplay redesign spec
 - Write implementation plan (invoke writing-plans skill)
-- Implement the redesign
+- ~~Implement the redesign~~ Done 2026-04-03
 - Add Cloudflare API token to GitHub secrets for auto-deploy
 - Test on real phones (iOS Safari, Android Chrome)
 - Share card visual testing
 - Consider: onboarding flow improvements, haptic feedback on mobile
+
+---
+
+## 2026-04-03 — Scoring Redesign: Bingo Lines + Points Fallback
+
+### What we did
+- Rejected previous complex redesign (5 secret squares, 3 scoring sources)
+- Designed simpler alternative: keep secret line, add bingo line bonuses
+- **New terminology:** "bingo" = any line complete (+3), "bonus bingo" = opponent's line (instant win)
+- **New scoring:** score = your marks + (your completed bingo lines × 3)
+- **New game end:** bonus bingo = instant win, no bonus bingo by midnight = highest score wins
+- Wrote spec + plan, implemented via subagent-driven development (12 tasks)
+- **Bug found during E2E testing:** both players got +3 for lines completed by either player. Fixed — only YOUR marks count for line bonuses.
+- Comprehensive test suite: 13 unit tests (dailyCard), 10 unit tests (duoStore), 9 API integration tests
+- All 32 tests passing, deployed to production
+
+### Key files changed
+- `worker.js` — `computeScore`, `checkBonusBingo`, `countCompletedLines` (per-player), mark/state/reset handlers
+- `src/lib/dailyCard.ts` — `ALL_LINES`, `countCompletedLines`, `getCompletedLineIndices`
+- `src/stores/duoStore.ts` — `bonusBingo` state
+- `src/stores/connectionStore.ts` — pass `bonusBingo` to handlers
+- `src/components/bingo/DuoScoreboard.tsx` — points display, scoring info
+- `src/components/bingo/GameOverScreen.tsx` — "Bonus Bingo!" text, pts suffix
+- `src/components/bingo/BingoCard.tsx` — completed line highlighting (your marks only)
+- `src/lib/api.ts` — removed `hit`, added `bonusBingo`
+
+### Next session
+- Add Cloudflare API token to GitHub secrets for auto-deploy
+- Test on real phones (iOS Safari, Android Chrome)
+- Visual testing: share card, game over screen
+- Update CLAUDE.md project docs with new scoring terminology
+- Consider: tutorial update for new scoring, haptic feedback
