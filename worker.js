@@ -865,7 +865,6 @@ export class BingoRoom {
 
       return new Response(JSON.stringify({
         success: true,
-        hit: false,
         myScore,
         partnerScore,
         gameOver: false
