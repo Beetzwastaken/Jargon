@@ -1,12 +1,12 @@
 # Jargon
 
-Buzzword bingo you play during real work meetings. Open the app, get a card of corporate buzzwords, and tap them as you hear them. Complete a line and you win.
+Buzzword bingo you play during real work meetings. Open the app, get a card of corporate buzzwords, and tap them as you hear them.
 
 ## How It Works
 
 **Solo** — Play during any meeting. Random card, tap buzzwords as they come up, track your score across games.
 
-**Duo** — Pair with a colleague in the same meeting. You both get the same daily card (Wordle-style, one per day). Each secretly picks a line to complete. Race to finish yours first.
+**Duo** — Pair with a colleague in the same meeting. You both get the same daily card (Wordle-style, one per day). Each secretly picks a line. Score points by marking squares (+1) and completing bingo lines (+3). Complete your opponent's secret line for a Bonus Bingo — instant win! No Bonus Bingo by midnight? Highest score wins.
 
 ## Play
 
