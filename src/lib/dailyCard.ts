@@ -148,7 +148,7 @@ export const ALL_LINES: Array<{ type: 'row' | 'col' | 'diag'; index: number }> =
   { type: 'diag', index: 0 }, { type: 'diag', index: 1 }
 ];
 
-/** Count how many bingo lines are fully completed (all 5 squares marked by anyone) */
+/** Count how many bingo lines are fully completed by the given marked indices */
 export function countCompletedLines(markedIndices: number[]): number {
   const markedSet = new Set(markedIndices);
   let count = 0;

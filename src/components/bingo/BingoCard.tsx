@@ -31,10 +31,11 @@ export function BingoCard({
   const iAmPartner = isHost === false;
 
   const completedLineSquares = useMemo(() => {
-    const markedIndices = marks.map(m => m.index);
-    const lines = getCompletedLineIndices(markedIndices);
+    // Only count lines completed by MY marks
+    const myMarkedIndices = marks.filter(m => m.markedBy === myPlayerId).map(m => m.index);
+    const lines = getCompletedLineIndices(myMarkedIndices);
     return new Set(lines.flat());
-  }, [marks]);
+  }, [marks, myPlayerId]);
 
   const gridRef = useRef<HTMLDivElement>(null);
 

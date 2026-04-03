@@ -96,13 +96,13 @@ const ALL_LINES = [
   { type: 'diag', index: 0 }, { type: 'diag', index: 1 }
 ];
 
-// Count how many bingo lines are fully marked (by either player — marks are shared)
-function countCompletedLines(marks) {
-  const markedSet = new Set(marks.map(m => m.idx));
+// Count how many bingo lines are fully marked by a specific player
+function countCompletedLines(marks, playerId) {
+  const playerMarks = new Set(marks.filter(m => m.marked_by === playerId).map(m => m.idx));
   let count = 0;
   for (const line of ALL_LINES) {
     const indices = getLineIndices(line);
-    if (indices.every(idx => markedSet.has(idx))) {
+    if (indices.every(idx => playerMarks.has(idx))) {
       count++;
     }
   }
@@ -488,7 +488,7 @@ export class BingoRoom {
     // Score = squares this player marked + (completed bingo lines × 3)
     const marks = this.getMarks();
     const myMarks = marks.filter(m => m.marked_by === playerId).length;
-    const completedLines = countCompletedLines(marks);
+    const completedLines = countCompletedLines(marks, playerId);
     return myMarks + (completedLines * 3);
   }
 
