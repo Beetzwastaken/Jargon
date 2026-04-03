@@ -37,10 +37,10 @@ export interface DuoSelectResponse {
 
 export interface DuoMarkResponse {
   success: boolean;
-  hit: boolean;
   myScore: number;
   partnerScore: number;
   gameOver: boolean;
+  bonusBingo?: boolean;
   unmarked?: boolean;
 }
 
