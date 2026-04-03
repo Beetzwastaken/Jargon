@@ -1,6 +1,7 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import type { BingoSquare } from '../../types';
 import type { MarkEntry } from '../../stores/duoStore';
+import { getCompletedLineIndices } from '../../lib/dailyCard';
 
 interface BingoCardProps {
   squares: BingoSquare[];
@@ -28,6 +29,13 @@ export function BingoCard({
   // Host always teal (marked-mine), partner always amber (marked-partner)
   // If I'm the partner, swap: my marks get amber, opponent's marks get teal
   const iAmPartner = isHost === false;
+
+  const completedLineSquares = useMemo(() => {
+    const markedIndices = marks.map(m => m.index);
+    const lines = getCompletedLineIndices(markedIndices);
+    return new Set(lines.flat());
+  }, [marks]);
+
   const gridRef = useRef<HTMLDivElement>(null);
 
   const getMarkInfo = (index: number) => {
@@ -49,6 +57,9 @@ export function BingoCard({
       classes += ' ring-1 ring-j-me/40';
     } else if (isPartnerLine) {
       classes += ' ring-1 ring-j-partner/40';
+    } else if (phase === 'playing' && completedLineSquares.has(index)) {
+      // Completed bingo line highlight (playing phase only, no conflict with secret line rings)
+      classes += ' ring-1 ring-j-accent/50';
     }
 
     // Mark colors — host always teal, partner always amber
