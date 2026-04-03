@@ -1,7 +1,7 @@
 // Jargon - Duo Mode Backend
 // Cloudflare Workers with Durable Objects for paired play
 
-import { JARGON_PHRASES } from './src/data/buzzwords.js';
+import { JARGON_PHRASES } from './src/data/buzzwords.ts';
 const BUZZWORDS = JARGON_PHRASES;
 
 // Import and re-export DashboardAnalytics for wrangler
