@@ -2,7 +2,6 @@
 // Provides real-time updates when WebSocket unavailable
 
 import { getApiBaseUrl } from './config';
-import type { LineSelection } from '../stores/duoStore';
 
 export interface DuoStateUpdate {
   code: string;
@@ -13,16 +12,18 @@ export interface DuoStateUpdate {
   partnerName: string | null;
   isPaired: boolean;
   // Selection phase
-  isMyTurnToPick?: boolean;
-  partnerHasSelected?: boolean;
-  myLine?: LineSelection;
+  mySquares?: number[];
+  myReady?: boolean;
+  partnerReady?: boolean;
   // Playing/finished phase
   marks?: Array<{ index: number; markedBy: string }>;
-  myScore?: number;
-  partnerScore?: number;
+  myHits?: number;
+  partnerHits?: number;
+  myMarks?: number;
+  partnerMarks?: number;
   // Finished phase only
   winner?: string;
-  partnerLine?: LineSelection;
+  partnerSquares?: number[];
   card?: string[];
 }
 
@@ -113,8 +114,8 @@ export class BingoPollingClient {
     }, this.options.pollInterval);
   }
 
-  // Select line
-  async selectLine(line: LineSelection): Promise<boolean> {
+  // Select squares
+  async selectSquares(squares: number[]): Promise<boolean> {
     try {
       const baseUrl = getApiBaseUrl();
       const url = baseUrl
@@ -127,7 +128,7 @@ export class BingoPollingClient {
           'Content-Type': 'application/json',
           'X-Player-ID': this.options.playerId
         },
-        body: JSON.stringify({ line })
+        body: JSON.stringify({ squares })
       });
 
       if (response.ok) {

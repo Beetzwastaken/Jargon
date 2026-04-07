@@ -1,8 +1,6 @@
 // API functions for Jargon - Duo Mode
 
 import { getApiBaseUrl } from './config';
-import type { LineSelection } from '../stores/duoStore';
-
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
@@ -37,21 +35,24 @@ export interface DuoSelectResponse {
 
 export interface DuoMarkResponse {
   success: boolean;
-  myScore: number;
-  partnerScore: number;
+  myHits: number;
+  partnerHits: number;
   gameOver: boolean;
-  bonusBingo?: boolean;
+  allHit?: boolean;
+  isHit?: boolean;
   unmarked?: boolean;
 }
 
 export interface DuoSnapshotResponse {
   success: boolean;
   date: string;
-  myLine: LineSelection | null;
-  partnerLine: LineSelection | null;
+  mySquares: number[] | null;
+  partnerSquares: number[] | null;
   marks: Array<{ index: number; markedBy: string }>;
-  myScore: number;
-  partnerScore: number;
+  myHits: number;
+  partnerHits: number;
+  myMarks: number;
+  partnerMarks: number;
   winner: string | null;
 }
 
@@ -106,14 +107,14 @@ export async function joinDuoGame(code: string, playerName: string): Promise<Api
   });
 }
 
-// Select a line
-export async function selectLine(roomCode: string, playerId: string, line: LineSelection): Promise<ApiResponse<DuoSelectResponse>> {
+// Select squares
+export async function selectSquares(roomCode: string, playerId: string, squares: number[]): Promise<ApiResponse<DuoSelectResponse>> {
   return apiRequest<DuoSelectResponse>(`/api/duo/${roomCode}/select`, {
     method: 'POST',
     headers: {
       'X-Player-ID': playerId
     },
-    body: JSON.stringify({ line }),
+    body: JSON.stringify({ squares }),
   });
 }
 

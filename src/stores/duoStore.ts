@@ -11,19 +11,13 @@ import {
 import {
   createDuoGame,
   joinDuoGame,
-  selectLine as apiSelectLine,
+  selectSquares as apiSelectSquares,
   markSquare as apiMarkSquare,
   leaveDuoGame,
   fetchSnapshot,
 } from '../lib/api';
 import type { DuoSnapshotResponse } from '../lib/api';
 import { useConnectionStore } from './connectionStore';
-
-// Line selection type
-export interface LineSelection {
-  type: 'row' | 'col' | 'diag';
-  index: number; // 0-4 for rows/cols, 0-1 for diagonals
-}
 
 // Mark entry
 export interface MarkEntry {
@@ -37,11 +31,13 @@ export type DuoPhase = 'unpaired' | 'waiting' | 'selecting' | 'playing' | 'finis
 // Yesterday snapshot
 export interface YesterdaySnapshot {
   date: string;
-  myLine: LineSelection | null;
-  partnerLine: LineSelection | null;
+  mySquares: number[] | null;
+  partnerSquares: number[] | null;
   marks: MarkEntry[];
-  myScore: number;
-  partnerScore: number;
+  myHits: number;
+  partnerHits: number;
+  myMarks: number;
+  partnerMarks: number;
   winner: string | null;
 }
 
@@ -59,23 +55,23 @@ interface DuoState {
   // Phase
   phase: DuoPhase;
 
-  // Line Selection
-  myLine: LineSelection | null;
-  isMyTurnToPick: boolean;
-  partnerHasSelected: boolean;
+  // Square Selection
+  mySquares: number[] | null;
+  myReady: boolean;
+  partnerReady: boolean;
 
   // Daily Card
   dailyCard: BingoSquare[];
   dailySeed: string;
 
-  // Game State - server is source of truth for scores
+  // Game State - server is source of truth for hits
   marks: MarkEntry[];
-  myScore: number;
-  partnerScore: number;
+  myHits: number;
+  partnerHits: number;
   gameOver: boolean;
-  bonusBingo: boolean;
+  allHit: boolean;
   winner: 'me' | 'partner' | 'tie' | null;
-  partnerLine: LineSelection | null; // only in finished phase
+  partnerSquares: number[] | null; // only in finished phase
 
   // Snapshot
   snapshot: YesterdaySnapshot | null;
@@ -88,8 +84,8 @@ interface DuoActions {
   joinGame: (code: string, playerName: string) => Promise<{ success: boolean; error?: string }>;
   leaveGame: () => void;
 
-  // Line Selection
-  selectLine: (line: LineSelection) => Promise<{ success: boolean; error?: string }>;
+  // Square Selection
+  selectSquares: (squares: number[]) => Promise<{ success: boolean; error?: string }>;
 
   // Game Actions
   markSquare: (index: number) => Promise<void>;
@@ -98,17 +94,15 @@ interface DuoActions {
   syncState: (state: Partial<DuoState>) => void;
   handlePartnerJoined: (partner: { id: string; name: string }) => void;
   handlePartnerLeft: (roomDestroyed?: boolean) => void;
-  handleYourTurnToPick: () => void;
+  handlePartnerReady: () => void;
   handleBothSelected: () => void;
-  handleSquareMarked: (index: number, markedBy: string, myScore: number, partnerScore: number) => void;
-  handleSquareUnmarked: (index: number, markedBy: string | undefined, myScore: number, partnerScore: number) => void;
-  handleGameOver: (winner: string, myScore: number, partnerScore: number, hostLine: LineSelection, partnerLine: LineSelection, bonusBingo?: boolean) => void;
+  handleSquareMarked: (index: number, markedBy: string, isHit: boolean, myHits: number, partnerHits: number) => void;
+  handleSquareUnmarked: (index: number, markedBy: string | undefined, myHits: number, partnerHits: number) => void;
+  handleGameOver: (winner: string, myHits: number, partnerHits: number, myMarks: number, partnerMarks: number, hostSquares: number[], partnerSquaresRevealed: number[], allHit?: boolean) => void;
   handleDailyReset: (newSeed: string) => void;
 
   // Utilities
   checkDailyReset: () => boolean;
-  getMyLineIndices: () => number[];
-  getPartnerLineIndices: () => number[];
   loadSnapshot: () => Promise<void>;
 }
 

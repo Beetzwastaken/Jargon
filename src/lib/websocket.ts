@@ -12,13 +12,16 @@ export interface DuoWebSocketMessage {
   // Square marked/unmarked
   index?: number;
   markedBy?: string;
-  hostScore?: number;
-  partnerScore?: number;
+  hostHits?: number;
+  partnerHits?: number;
+  hostMarks?: number;
+  partnerMarks?: number;
+  isHit?: boolean;
   // Game over
   winner?: string;
-  hostLine?: { type: 'row' | 'col' | 'diag'; index: number };
-  partnerLine?: { type: 'row' | 'col' | 'diag'; index: number };
-  bonusBingo?: boolean;
+  hostSquares?: number[];
+  partnerSquares?: number[];
+  allHit?: boolean;
   // Daily reset
   newSeed?: string;
   // Connection state
@@ -26,7 +29,8 @@ export interface DuoWebSocketMessage {
   isHost?: boolean;
   hostName?: string;
   isPaired?: boolean;
-  isMyTurnToPick?: boolean;
+  myReady?: boolean;
+  partnerReady?: boolean;
 }
 
 interface ConnectionOptions {
@@ -220,8 +224,8 @@ export const DUO_MESSAGE_TYPES = {
   PARTNER_JOINED: 'partner_joined',
   PARTNER_LEFT: 'partner_left',
 
-  // Line selection
-  YOUR_TURN_TO_PICK: 'your_turn_to_pick',
+  // Selection
+  PARTNER_READY: 'partner_ready',
   BOTH_SELECTED: 'both_selected',
 
   // Gameplay
