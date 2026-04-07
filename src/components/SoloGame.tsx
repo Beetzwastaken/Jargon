@@ -111,8 +111,8 @@ export function SoloGame({ onBack }: SoloGameProps) {
                   onSquareClick={handleSquareClick}
                   myPlayerId="solo"
                   marks={markedSquares.map((marked, i) => marked ? { index: i, markedBy: 'solo' } : null).filter((m): m is { index: number; markedBy: string } => m !== null)}
+                  mySquares={[]}
                   phase="playing"
-                  hasBingo={hasBingo}
                 />
 
                 {/* Instructions */}
