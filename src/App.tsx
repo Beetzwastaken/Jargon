@@ -140,9 +140,9 @@ function App() {
 
   // Render duo mode
   return (
-    <div className="h-screen bg-j-bg text-j-text font-display flex flex-col overflow-hidden">
+    <div className="h-screen bg-j-bg text-j-text font-display flex flex-col">
       {/* Header */}
-      <header className="bg-j-surface/80 border-b border-white/[0.06] z-50 backdrop-blur-xl flex-shrink-0 sticky top-0">
+      <header className="bg-j-surface/80 border-b border-white/[0.06] z-50 backdrop-blur-xl shrink-0 fixed top-0 left-0 right-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-14">
             {/* Logo + Back */}
@@ -222,7 +222,7 @@ function App() {
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden min-h-0 relative">
+      <div className="flex flex-1 overflow-hidden min-h-0 relative mt-14">
         {/* Mobile Sidebar Overlay */}
         {sidebarOpen && (
           <div
