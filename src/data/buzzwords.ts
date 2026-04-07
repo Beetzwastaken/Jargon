@@ -1,6 +1,6 @@
 // Jargon Phrases - Curated corporate buzzwords and meeting moments
 // Updated: April 2026
-// Total: 149
+// Total: 142
 
 export const JARGON_PHRASES = [
   "Circle Back",
@@ -10,7 +10,6 @@ export const JARGON_PHRASES = [
   "Can You Hear Me?",
   "Share My Screen",
   "Sorry, I Was Muted",
-  "Can You See My Screen?",
   "Hard Stop",
   "Double Booked",
   "Technical Issues",
@@ -49,12 +48,9 @@ export const JARGON_PHRASES = [
   "World-class",
   "Industry-leading",
   "Cutting-edge",
-  "Disrupt",
-  "Pivot",
-  "AI-powered",
+  "AI",
   "Data-driven",
   "Agile",
-  "Thought Leader",
   "Self-starter",
   "Team Player",
   "Culture Fit",
@@ -68,7 +64,6 @@ export const JARGON_PHRASES = [
   "Takeaways",
   "Next Steps",
   "Follow-up",
-  "Touch Points",
   "Check-in",
   "Cadence",
   "Loop In",
@@ -87,7 +82,6 @@ export const JARGON_PHRASES = [
   "Core Competency",
   "Game Plan",
   "Roadmap",
-  "Ecosystem",
   "Holistic Approach",
   "30,000 Foot View",
   "Big Picture",
@@ -124,7 +118,6 @@ export const JARGON_PHRASES = [
   "Boots on the Ground",
   "Push the Envelope",
   "Raise the Bar",
-  "Resource Allocation",
   "Change Management",
   "Stakeholder Buy-in",
   "Cross-functional",
