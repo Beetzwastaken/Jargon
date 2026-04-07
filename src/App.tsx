@@ -3,7 +3,7 @@ import { BingoCard } from './components/bingo/BingoCard';
 import { GameOverScreen } from './components/bingo/GameOverScreen';
 import { WelcomeTutorial } from './components/shared/WelcomeTutorial';
 import { DuoScoreboard } from './components/bingo/DuoScoreboard';
-import { LineSelector } from './components/bingo/LineSelector';
+import { SquareSelector } from './components/bingo/LineSelector';
 import { ModeSelector } from './components/ModeSelector';
 import { SoloGame } from './components/SoloGame';
 import { useDuoStore, regenerateDailyCardIfNeeded } from './stores/duoStore';
@@ -37,18 +37,17 @@ function App() {
     partnerName,
     isPaired,
     isHost,
-    myLine,
+    mySquares,
+    myReady,
+    partnerReady,
     dailyCard,
     marks,
-    myScore,
-    partnerScore,
-    isMyTurnToPick,
-    partnerHasSelected,
-    selectLine,
+    selectSquares,
+    partnerSquares,
+    myHits,
+    partnerHits,
     markSquare,
     leaveGame,
-    getMyLineIndices,
-    getPartnerLineIndices,
     loadSnapshot,
   } = useDuoStore();
 
@@ -102,10 +101,10 @@ function App() {
     await markSquare(index);
   };
 
-  const handleLineSelect = async (line: { type: 'row' | 'col' | 'diag'; index: number }) => {
-    const result = await selectLine(line);
+  const handleSquaresSelect = async (squares: number[]) => {
+    const result = await selectSquares(squares);
     if (result.success) {
-      showGameToast('Line Selected', 'Waiting for partner...', 'success');
+      showGameToast('Squares Hidden', 'Waiting for partner...', 'success');
     } else if (result.error) {
       showGameToast('Error', result.error, 'error');
     }
@@ -290,15 +289,14 @@ function App() {
               </div>
             )}
 
-            {/* Phase: Selecting - Show LineSelector */}
+            {/* Phase: Selecting - Show SquareSelector */}
             {phase === 'selecting' && (
               <div className="py-8">
-                <LineSelector
-                  onSelect={handleLineSelect}
-                  selectedLine={myLine}
-                  isMyTurn={isMyTurnToPick}
-                  partnerHasSelected={partnerHasSelected}
-                  disabled={!!myLine}
+                <SquareSelector
+                  onSelect={handleSquaresSelect}
+                  myReady={myReady}
+                  partnerReady={partnerReady}
+                  disabled={myReady}
                 />
 
                 {isPaired && (
@@ -330,7 +328,7 @@ function App() {
                   onSquareClick={handleSquareClick}
                   myPlayerId={odId || ''}
                   marks={marks}
-                  myLineIndices={getMyLineIndices()}
+                  mySquares={mySquares || []}
                   isHost={isHost}
                   phase="playing"
                 />
@@ -346,13 +344,13 @@ function App() {
                   <div className="mt-8">
                     <BingoCard
                       squares={boardSquares}
-                      onSquareClick={() => {}} // no-op in finished
+                      onSquareClick={() => {}}
                       myPlayerId={odId || ''}
                       marks={marks}
-                      myLineIndices={getMyLineIndices()}
+                      mySquares={mySquares || []}
                       isHost={isHost}
                       phase="finished"
-                      partnerLineIndices={getPartnerLineIndices()}
+                      partnerSquares={partnerSquares || []}
                     />
                   </div>
                 )}
@@ -381,12 +379,12 @@ function App() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-j-me">{odName || 'You'}</span>
-                    <span className="text-j-me font-bold">{myScore} pts</span>
+                    <span className="text-j-me font-bold">{myHits}/5 hits</span>
                   </div>
                   {partnerName && (
                     <div className="flex items-center justify-between">
                       <span className="text-j-partner">{partnerName}</span>
-                      <span className="text-j-partner font-bold">{partnerScore} pts</span>
+                      <span className="text-j-partner font-bold">{partnerHits}/5 hits</span>
                     </div>
                   )}
                 </div>
@@ -396,10 +394,10 @@ function App() {
               <div className="apple-panel p-4">
                 <h3 className="text-sm font-medium text-j-secondary mb-3">Scoring</h3>
                 <ul className="text-xs text-j-tertiary space-y-1">
-                  <li>+1 per square you mark</li>
-                  <li>+3 per bingo line you complete</li>
-                  <li>Bonus Bingo (opponent's line) = instant win</li>
-                  <li>No Bonus Bingo? Highest score at midnight wins</li>
+                  <li>Mark squares when you hear them</li>
+                  <li>Hit = marking opponent's hidden square</li>
+                  <li>5/5 hits = instant win</li>
+                  <li>Midnight: most hits wins, tiebreaker: most marks</li>
                 </ul>
               </div>
 
