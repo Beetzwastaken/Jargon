@@ -89,7 +89,7 @@ export function RoomManager() {
                 Paired with {partnerName}
               </h2>
               <p className="text-j-secondary text-sm">
-                {phase === 'selecting' ? 'Time to pick your bingo line!'
+                {phase === 'selecting' ? 'Time to hide your squares!'
                   : phase === 'playing' ? 'Game in progress'
                   : 'Connected'}
               </p>
@@ -159,7 +159,7 @@ export function RoomManager() {
       <div className="flex flex-col h-full p-4 space-y-4">
         <div className="apple-panel p-6 text-center">
           <h2 className="text-lg font-semibold text-j-text mb-2">Duo Mode</h2>
-          <p className="text-j-secondary text-sm">Play bingo with a partner. Same card, different lines.</p>
+          <p className="text-j-secondary text-sm">Hide 5 squares, mark buzzwords, find your opponent's hidden spots.</p>
         </div>
 
         <button

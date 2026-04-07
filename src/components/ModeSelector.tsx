@@ -62,7 +62,7 @@ export function ModeSelector({ onSelectMode }: ModeSelectorProps) {
             <span className="text-j-tertiary text-xs font-mono uppercase tracking-wider">2 players</span>
           </div>
           <p className="text-j-tertiary text-sm leading-relaxed">
-            Pair with a colleague. Mark buzzwords, complete lines, hunt their secret line.
+            Pair with a colleague. Hide squares, mark buzzwords, find their hidden spots.
           </p>
           <div className="mt-4 flex items-center gap-2 text-j-accent/60 group-hover:text-j-accent/90 transition-colors">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

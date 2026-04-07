@@ -18,11 +18,11 @@ export function WelcomeTutorial({ show, onComplete }: WelcomeTutorialProps) {
           </p>
           <p className="text-j-secondary">
             Open the app before your next meeting. You'll get a card of corporate buzzwords.
-            When someone in the meeting says one — tap it. Complete a line and you win.
+            When someone in the meeting says one — tap it.
           </p>
           <div className="bg-j-raised rounded-lg p-4 text-sm text-j-secondary space-y-2">
             <p><span className="text-j-me font-medium">Solo</span> — Play on your own during any meeting</p>
-            <p><span className="text-j-accent font-medium">Duo</span> — Pair with a colleague, mark buzzwords, hunt their secret line</p>
+            <p><span className="text-j-accent font-medium">Duo</span> — Pair with a colleague, hide squares, find their hidden spots</p>
           </div>
         </div>
       )
@@ -36,7 +36,7 @@ export function WelcomeTutorial({ show, onComplete }: WelcomeTutorialProps) {
               { num: '1', text: 'Pick Solo or Duo from the home screen' },
               { num: '2', text: 'Open the app when your meeting starts' },
               { num: '3', text: 'Tap buzzwords as you hear them in the meeting' },
-              { num: '4', text: 'Complete a full line (row, column, or diagonal) to win' }
+              { num: '4', text: 'In Solo: complete a line to win. In Duo: find hidden squares!' }
             ].map(({ num, text }) => (
               <div key={num} className="flex items-start gap-3">
                 <div className="w-7 h-7 rounded-full bg-j-accent/20 flex items-center justify-center text-j-accent font-bold text-sm font-mono flex-shrink-0">
@@ -59,20 +59,20 @@ export function WelcomeTutorial({ show, onComplete }: WelcomeTutorialProps) {
       content: (
         <div className="space-y-4">
           <p className="text-j-secondary">
-            You and a partner get the same card. Each of you secretly picks a line.
-            Score points by marking squares (+1 each) and completing bingo lines (+3 each).
-            Complete your opponent's secret line for a Bonus Bingo — instant win!
-            No Bonus Bingo by midnight? Highest score wins.
+            You and a partner get the same card. Each of you secretly hides 5 squares.
+            Mark buzzwords as you hear them — if you mark one of your opponent's hidden squares, that's a hit!
+            Find all 5 of their hidden squares for an instant win.
+            No instant win by midnight? Most hits wins.
           </p>
           <div className="bg-j-raised rounded-lg p-4 text-sm text-j-secondary space-y-2">
             <p>Create a room and share the 4-character code</p>
             <p>Or join with a code from your partner</p>
-            <p>Both pick your lines, then start tapping</p>
+            <p>Both hide your squares, then start tapping</p>
           </div>
           <div className="flex gap-4 text-xs font-mono">
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded bg-j-me/40 ring-1 ring-j-me/60"></div>
-              <span className="text-j-me">Your line</span>
+              <span className="text-j-me">Your squares</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded bg-j-partner/40 ring-1 ring-j-partner/60"></div>
