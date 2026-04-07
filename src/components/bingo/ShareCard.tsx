@@ -1,18 +1,23 @@
 // ShareCard - Generates emoji grid for sharing duo results
 import { useState } from 'react';
 import { useDuoStore } from '../../stores/duoStore';
-import { getLineIndices } from '../../lib/dailyCard';
 
 interface ShareCardProps {
   onClose: () => void;
 }
 
 export function ShareCard({ onClose }: ShareCardProps) {
-  const { myLine, partnerLine, myScore, partnerScore, winner, dailySeed, odName, partnerName } = useDuoStore();
+  const { mySquares, partnerSquares, myHits, partnerHits, marks, odId, winner, dailySeed, odName, partnerName } = useDuoStore();
   const [copied, setCopied] = useState(false);
 
-  const myIndices = myLine ? getLineIndices(myLine) : [];
-  const partnerIndices = partnerLine ? getLineIndices(partnerLine) : [];
+  const mySet = new Set(mySquares ?? []);
+  const partnerSet = new Set(partnerSquares ?? []);
+  // Indices where I marked an opponent's hidden square
+  const myHitSet = new Set(
+    marks
+      .filter(m => m.markedBy === odId && partnerSet.has(m.index))
+      .map(m => m.index)
+  );
 
   const buildGrid = (): string => {
     const rows: string[] = [];
@@ -20,9 +25,11 @@ export function ShareCard({ onClose }: ShareCardProps) {
       let line = '';
       for (let col = 0; col < 5; col++) {
         const idx = row * 5 + col;
-        const inMine = myIndices.includes(idx);
-        const inPartner = partnerIndices.includes(idx);
-        if (inMine && inPartner) line += '🟪';
+        const inMine = mySet.has(idx);
+        const inPartner = partnerSet.has(idx);
+        const isHit = myHitSet.has(idx);
+        if (isHit) line += '💥';
+        else if (inMine && inPartner) line += '🟪';
         else if (inMine) line += '🟦';
         else if (inPartner) line += '🟧';
         else line += '⬜';
@@ -33,7 +40,7 @@ export function ShareCard({ onClose }: ShareCardProps) {
   };
 
   const getWinnerText = () => {
-    if (winner === 'tie') return 'Tie!';
+    if (winner === 'tie') return 'Draw!';
     if (winner === 'me') return `${odName || 'Me'} wins`;
     return `${partnerName || 'Partner'} wins`;
   };
@@ -41,12 +48,12 @@ export function ShareCard({ onClose }: ShareCardProps) {
   const shareText = [
     `Jargon Duo - ${dailySeed}`,
     '',
-    `${odName || 'Me'}: ${myScore} pts | ${partnerName || 'Partner'}: ${partnerScore} pts`,
+    `${odName || 'Me'}: ${myHits}/5 hits | ${partnerName || 'Partner'}: ${partnerHits}/5 hits`,
     getWinnerText(),
     '',
     buildGrid(),
     '',
-    '🟦 my line  🟧 partner  🟪 overlap',
+    '🟦 mine  🟧 theirs  💥 hit  🟪 overlap',
     'playjargon.com',
   ].join('\n');
 
