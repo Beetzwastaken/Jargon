@@ -805,22 +805,24 @@ export class BingoRoom {
 
       this.sql.exec('DELETE FROM marks WHERE idx = ?', index);
       const scores = this.computeScores(room);
+      const opponentSquares = isHost ? room.partner_squares : room.host_squares;
+      const isHit = opponentSquares && opponentSquares.includes(index);
 
       this.broadcastToRoom({
         type: 'square_unmarked',
         index,
         markedBy: playerId,
-        hostScore: scores.hostScore,
-        partnerScore: scores.partnerScore
+        hostHits: scores.hostHits,
+        partnerHits: scores.partnerHits,
+        hostMarks: scores.hostMarks,
+        partnerMarks: scores.partnerMarks,
+        isHit
       });
-
-      const myScore = isHost ? scores.hostScore : scores.partnerScore;
-      const partnerScore = isHost ? scores.partnerScore : scores.hostScore;
 
       return new Response(JSON.stringify({
         success: true,
-        myScore,
-        partnerScore,
+        myHits: isHost ? scores.hostHits : scores.partnerHits,
+        partnerHits: isHost ? scores.partnerHits : scores.hostHits,
         gameOver: false
       }), {
         headers: { 'Content-Type': 'application/json' }
@@ -833,21 +835,27 @@ export class BingoRoom {
       index, playerId, Date.now()
     );
 
-    // Check bonus bingo (completed opponent's secret line = instant win)
-    const bonusBingo = this.checkBonusBingo(playerId, room);
+    const opponentSquares = isHost ? room.partner_squares : room.host_squares;
+    const isHit = opponentSquares && opponentSquares.includes(index);
+
+    // Check if all opponent squares hit = instant win
+    const allHit = this.checkAllHit(playerId, room);
 
     const scores = this.computeScores(room);
-    const myScore = isHost ? scores.hostScore : scores.partnerScore;
-    const partnerScoreVal = isHost ? scores.partnerScore : scores.hostScore;
+    const myHits = isHost ? scores.hostHits : scores.partnerHits;
+    const partnerHitsVal = isHost ? scores.partnerHits : scores.hostHits;
 
-    if (bonusBingo) {
+    if (allHit) {
       // Broadcast the final mark before game_over so partner sees it
       this.broadcastToRoom({
         type: 'square_marked',
         index,
         markedBy: playerId,
-        hostScore: scores.hostScore,
-        partnerScore: scores.partnerScore
+        hostHits: scores.hostHits,
+        partnerHits: scores.partnerHits,
+        hostMarks: scores.hostMarks,
+        partnerMarks: scores.partnerMarks,
+        isHit
       });
 
       this.updateRoom({ phase: 'finished', last_activity: Date.now() });
@@ -856,30 +864,34 @@ export class BingoRoom {
       const winnerRole = isHost ? 'host' : 'partner';
       const allMarks = this.getMarks();
       this.sql.exec(
-        `INSERT OR REPLACE INTO snapshots (date, host_id, host_name, partner_id, partner_name, host_score, partner_score, winner, host_line, partner_line, marks_json)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT OR REPLACE INTO snapshots (date, host_id, host_name, partner_id, partner_name, host_hits, partner_hits, host_marks, partner_marks, winner, host_squares, partner_squares, marks_json)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         room.daily_seed, room.host_id, room.host_name, room.partner_id, room.partner_name,
-        scores.hostScore, scores.partnerScore, isHost ? room.host_name : room.partner_name,
-        JSON.stringify(room.host_line), JSON.stringify(room.partner_line),
+        scores.hostHits, scores.partnerHits, scores.hostMarks, scores.partnerMarks,
+        isHost ? room.host_name : room.partner_name,
+        JSON.stringify(room.host_squares), JSON.stringify(room.partner_squares),
         JSON.stringify(allMarks)
       );
 
       this.broadcastToRoom({
         type: 'game_over',
         winner: winnerRole,
-        hostScore: scores.hostScore,
-        partnerScore: scores.partnerScore,
-        hostLine: room.host_line,
-        partnerLine: room.partner_line,
-        bonusBingo: true
+        hostHits: scores.hostHits,
+        partnerHits: scores.partnerHits,
+        hostMarks: scores.hostMarks,
+        partnerMarks: scores.partnerMarks,
+        hostSquares: room.host_squares,
+        partnerSquares: room.partner_squares,
+        allHit: true
       });
 
       return new Response(JSON.stringify({
         success: true,
-        myScore,
-        partnerScore: partnerScoreVal,
+        myHits,
+        partnerHits: partnerHitsVal,
         gameOver: true,
-        bonusBingo: true
+        allHit: true,
+        isHit
       }), {
         headers: { 'Content-Type': 'application/json' }
       });
@@ -890,17 +902,21 @@ export class BingoRoom {
       type: 'square_marked',
       index,
       markedBy: playerId,
-      hostScore: scores.hostScore,
-      partnerScore: scores.partnerScore
+      hostHits: scores.hostHits,
+      partnerHits: scores.partnerHits,
+      hostMarks: scores.hostMarks,
+      partnerMarks: scores.partnerMarks,
+      isHit
     });
 
     this.updateRoom({ last_activity: Date.now() });
 
     return new Response(JSON.stringify({
       success: true,
-      myScore,
-      partnerScore: partnerScoreVal,
-      gameOver: false
+      myHits,
+      partnerHits: partnerHitsVal,
+      gameOver: false,
+      isHit
     }), {
       headers: { 'Content-Type': 'application/json' }
     });
@@ -929,8 +945,6 @@ export class BingoRoom {
     const isHost = playerId === room.host_id;
     const marks = this.getMarks();
     const scores = this.computeScores(room);
-    const myScore = isHost ? scores.hostScore : scores.partnerScore;
-    const partnerScoreVal = isHost ? scores.partnerScore : scores.hostScore;
     const card = generateDailyCard(room.daily_seed);
 
     const response = {
@@ -942,34 +956,40 @@ export class BingoRoom {
       partnerName: room.partner_name,
       isPaired: !!room.partner_id,
       marks: marks.map(m => ({ index: m.idx, markedBy: m.marked_by })),
-      myScore,
-      partnerScore: partnerScoreVal,
+      myHits: isHost ? scores.hostHits : scores.partnerHits,
+      partnerHits: isHost ? scores.partnerHits : scores.hostHits,
+      myMarks: isHost ? scores.hostMarks : scores.partnerMarks,
+      partnerMarks: isHost ? scores.partnerMarks : scores.hostMarks,
       card
     };
 
     // Phase-specific fields
     if (room.phase === 'selecting') {
-      response.isMyTurnToPick = this.isPickTurn(playerId, room);
-      response.myLine = isHost ? room.host_line : room.partner_line;
-      response.partnerHasSelected = isHost ? !!room.partner_line : !!room.host_line;
+      response.mySquares = isHost ? room.host_squares : room.partner_squares;
+      response.myReady = isHost ? room.host_ready : room.partner_ready;
+      response.partnerReady = isHost ? room.partner_ready : room.host_ready;
     }
 
     if (room.phase === 'playing') {
-      response.myLine = isHost ? room.host_line : room.partner_line;
-      // Hide partner line during play
+      response.mySquares = isHost ? room.host_squares : room.partner_squares;
+      // Hide partner squares during play
     }
 
     if (room.phase === 'finished') {
-      response.myLine = isHost ? room.host_line : room.partner_line;
-      response.partnerLine = isHost ? room.partner_line : room.host_line;
-      // Determine winner — bonus bingo or highest score
-      if (this.checkBonusBingo(room.host_id, room)) {
+      response.mySquares = isHost ? room.host_squares : room.partner_squares;
+      response.partnerSquares = isHost ? room.partner_squares : room.host_squares;
+      // Determine winner — allHit first, then most hits, tiebreaker = most marks
+      if (this.checkAllHit(room.host_id, room)) {
         response.winner = 'host';
-      } else if (this.checkBonusBingo(room.partner_id, room)) {
+      } else if (this.checkAllHit(room.partner_id, room)) {
         response.winner = 'partner';
-      } else if (scores.hostScore > scores.partnerScore) {
+      } else if (scores.hostHits > scores.partnerHits) {
         response.winner = 'host';
-      } else if (scores.partnerScore > scores.hostScore) {
+      } else if (scores.partnerHits > scores.hostHits) {
+        response.winner = 'partner';
+      } else if (scores.hostMarks > scores.partnerMarks) {
+        response.winner = 'host';
+      } else if (scores.partnerMarks > scores.hostMarks) {
         response.winner = 'partner';
       } else {
         response.winner = 'tie';
@@ -983,29 +1003,33 @@ export class BingoRoom {
 
   performDailyReset(room, newSeed) {
     // Snapshot current game if it was in playing or finished
-    if ((room.phase === 'playing' || room.phase === 'finished') && room.host_line && room.partner_line) {
+    if ((room.phase === 'playing' || room.phase === 'finished') && room.host_squares && room.partner_squares) {
       const scores = this.computeScores(room);
       const allMarks = this.getMarks();
       let winner = null;
 
-      // Check bonus bingo first, then score
-      if (this.checkBonusBingo(room.host_id, room)) {
+      // Check allHit first, then most hits, then most marks tiebreaker
+      if (this.checkAllHit(room.host_id, room)) {
         winner = room.host_name;
-      } else if (this.checkBonusBingo(room.partner_id, room)) {
+      } else if (this.checkAllHit(room.partner_id, room)) {
         winner = room.partner_name;
-      } else if (scores.hostScore > scores.partnerScore) {
+      } else if (scores.hostHits > scores.partnerHits) {
         winner = room.host_name;
-      } else if (scores.partnerScore > scores.hostScore) {
+      } else if (scores.partnerHits > scores.hostHits) {
+        winner = room.partner_name;
+      } else if (scores.hostMarks > scores.partnerMarks) {
+        winner = room.host_name;
+      } else if (scores.partnerMarks > scores.hostMarks) {
         winner = room.partner_name;
       }
       // else: tie, winner stays null
 
       this.sql.exec(
-        `INSERT OR IGNORE INTO snapshots (date, host_id, host_name, partner_id, partner_name, host_score, partner_score, winner, host_line, partner_line, marks_json)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT OR IGNORE INTO snapshots (date, host_id, host_name, partner_id, partner_name, host_hits, partner_hits, host_marks, partner_marks, winner, host_squares, partner_squares, marks_json)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         room.daily_seed, room.host_id, room.host_name, room.partner_id, room.partner_name,
-        scores.hostScore, scores.partnerScore, winner,
-        JSON.stringify(room.host_line), JSON.stringify(room.partner_line),
+        scores.hostHits, scores.partnerHits, scores.hostMarks, scores.partnerMarks, winner,
+        JSON.stringify(room.host_squares), JSON.stringify(room.partner_squares),
         JSON.stringify(allMarks)
       );
     }
@@ -1013,17 +1037,14 @@ export class BingoRoom {
     // Clear marks
     this.sql.exec('DELETE FROM marks');
 
-    // Compute new pick order
-    const seed = dateToSeed(newSeed);
-    const hostFirstPick = seed % 2 === 0;
-
     // Update room
     const newPhase = room.partner_id ? 'selecting' : 'waiting';
     this.updateRoom({
       daily_seed: newSeed,
-      host_first_pick: hostFirstPick,
-      host_line: null,
-      partner_line: null,
+      host_squares: null,
+      partner_squares: null,
+      host_ready: false,
+      partner_ready: false,
       phase: newPhase,
       last_activity: Date.now()
     });
@@ -1061,11 +1082,13 @@ export class BingoRoom {
         date: row.date,
         myName: isHost ? row.host_name : row.partner_name,
         partnerName: isHost ? row.partner_name : row.host_name,
-        myScore: isHost ? row.host_score : row.partner_score,
-        partnerScore: isHost ? row.partner_score : row.host_score,
+        mySquares: isHost ? JSON.parse(row.host_squares) : JSON.parse(row.partner_squares),
+        partnerSquares: isHost ? JSON.parse(row.partner_squares) : JSON.parse(row.host_squares),
+        myHits: isHost ? row.host_hits : row.partner_hits,
+        partnerHits: isHost ? row.partner_hits : row.host_hits,
+        myMarks: isHost ? row.host_marks : row.partner_marks,
+        partnerMarks: isHost ? row.partner_marks : row.host_marks,
         winner: row.winner,
-        myLine: isHost ? JSON.parse(row.host_line) : JSON.parse(row.partner_line),
-        partnerLine: isHost ? JSON.parse(row.partner_line) : JSON.parse(row.host_line),
         marks: JSON.parse(row.marks_json)
       }
     }), {
@@ -1097,9 +1120,11 @@ export class BingoRoom {
           isPaired: !!room.partner_id
         };
 
-        // Include pick turn info if in selecting phase
+        // Include ready state if in selecting phase
         if (room.phase === 'selecting') {
-          connectMsg.isMyTurnToPick = this.isPickTurn(playerId, room);
+          const wsIsHost = playerId === room.host_id;
+          connectMsg.myReady = wsIsHost ? room.host_ready : room.partner_ready;
+          connectMsg.partnerReady = wsIsHost ? room.partner_ready : room.host_ready;
         }
 
         server.send(JSON.stringify(connectMsg));
