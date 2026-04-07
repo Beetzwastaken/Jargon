@@ -1,6 +1,6 @@
 # Jargon
 
-> Buzzword bingo you play during real meetings. Tap words as you hear them, hunt your opponent's hidden squares.
+> Your meetings needed a point. Here's one. Tap buzzwords as you hear them, hunt your opponent's hidden squares.
 
 ## Quick Reference
 
@@ -28,7 +28,7 @@ Session hooks auto-load these on startup. See `.claude/settings.json`.
 ### Solo
 - Random card, mark squares during any meeting, track score
 - Pure client-side, no backend needed
-- **Status**: Built — toggleable squares, undoable bingo, persistent score
+- **Status**: Built — toggleable squares, line completion, persistent score
 
 ### Duo
 - 2 players pair up in same meeting, share daily card

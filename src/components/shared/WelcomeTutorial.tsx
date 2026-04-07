@@ -14,7 +14,7 @@ export function WelcomeTutorial({ show, onComplete }: WelcomeTutorialProps) {
       content: (
         <div className="space-y-4">
           <p className="text-j-text text-lg">
-            Buzzword bingo you play during real meetings.
+            Your meetings needed a point. Here's one.
           </p>
           <p className="text-j-secondary">
             Open the app before your next meeting. You'll get a card of corporate buzzwords.

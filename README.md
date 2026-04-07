@@ -1,6 +1,6 @@
 # Jargon
 
-Buzzword bingo you play during real work meetings. Open the app, get a card of corporate buzzwords, and tap them as you hear them.
+Your meetings needed a point. Here's one. Open the app, get a card of corporate buzzwords, and tap them as you hear them.
 
 ## How It Works
 

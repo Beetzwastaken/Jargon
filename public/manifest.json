@@ -1,7 +1,7 @@
 {
-  "name": "Jargon — Buzzword Bingo for Meetings",
+  "name": "Jargon — Your meetings needed a point.",
   "short_name": "Jargon",
-  "description": "Play buzzword bingo during meetings. Mark off corporate jargon in real-time with colleagues and compete to complete your line first.",
+  "description": "A game you play during meetings. Mark buzzwords as you hear them. Play against a colleague. Survive together.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a0a",

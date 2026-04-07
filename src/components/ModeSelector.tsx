@@ -26,7 +26,7 @@ export function ModeSelector({ onSelectMode }: ModeSelectorProps) {
           <span className="text-j-accent">Jar</span><span className="text-j-text">gon</span>
         </h1>
         <p className="text-j-secondary text-base tracking-wide font-mono text-sm">
-          buzzword bingo for meetings
+          your meetings needed a point. here's one.
         </p>
       </div>
 

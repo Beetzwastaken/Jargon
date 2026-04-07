@@ -181,7 +181,7 @@ export function BingoCard({
         )}
       </div>
 
-      {/* 5x5 Bingo Grid */}
+      {/* 5x5 Grid */}
       <div
         className="bingo-grid"
         ref={gridRef}
@@ -234,7 +234,7 @@ export function BingoCard({
       </div>
 
       <div id="bingo-instructions" className="sr-only">
-        Use arrow keys to navigate the bingo grid. Press Enter or Space to mark a square when you hear the phrase mentioned.
+        Use arrow keys to navigate the grid. Press Enter or Space to mark a square when you hear the phrase mentioned.
       </div>
 
       {/* Game Progress */}
