@@ -68,12 +68,27 @@ export function BingoCard({
     }
 
     // Mark colors — host always teal, partner always amber
+    // In finished phase, dim non-hit marks so hits pop
+    const isFinishedHit = phase === 'finished' && (
+      (mySquares.includes(index) && partnerMark) ||
+      (partnerSquares.includes(index) && myMark)
+    );
+    const dimMark = phase === 'finished' && (myMark || partnerMark) && !isFinishedHit;
+
     if (myMark && partnerMark) {
-      classes += ' marked';
+      classes += dimMark ? ' marked marked-dim' : ' marked';
     } else if (myMark) {
-      classes += iAmPartner ? ' marked marked-partner' : ' marked marked-mine';
+      if (dimMark) {
+        classes += ' marked marked-dim';
+      } else {
+        classes += iAmPartner ? ' marked marked-partner' : ' marked marked-mine';
+      }
     } else if (partnerMark) {
-      classes += iAmPartner ? ' marked marked-mine' : ' marked marked-partner';
+      if (dimMark) {
+        classes += ' marked marked-dim';
+      } else {
+        classes += iAmPartner ? ' marked marked-mine' : ' marked marked-partner';
+      }
     }
 
     return classes;
