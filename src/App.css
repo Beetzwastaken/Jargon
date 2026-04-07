@@ -310,22 +310,8 @@ body {
   font-weight: 700;
 }
 
-.bingo-square.winning {
-  background: var(--j-accent);
-  border-color: var(--j-accent);
-  color: #0c0c0e;
-  animation: pulse-winning 1.2s ease-in-out infinite;
-}
-
-@keyframes pulse-winning {
-  0%, 100% {
-    transform: scale(1) translateZ(0);
-    box-shadow: 0 2px 8px var(--j-accent-strong-glow);
-  }
-  50% {
-    transform: scale(1.04) translateZ(0);
-    box-shadow: 0 4px 16px var(--j-accent-strong-glow);
-  }
+.bingo-square.hit-on-me {
+  box-shadow: inset 0 0 0 2px rgba(239, 68, 68, 0.6);
 }
 
 /* === BINGO HEADER === */

@@ -1,17 +1,15 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import type { BingoSquare } from '../../types';
 import type { MarkEntry } from '../../stores/duoStore';
-import { getCompletedLineIndices } from '../../lib/dailyCard';
 
 interface BingoCardProps {
   squares: BingoSquare[];
   onSquareClick: (index: number) => void;
   myPlayerId: string;
   marks: MarkEntry[];
-  myLineIndices: number[];
+  mySquares: number[];
   phase: 'playing' | 'finished';
-  partnerLineIndices?: number[];
-  hasBingo?: boolean;
+  partnerSquares?: number[];
   isHost?: boolean; // true = host (teal), false = partner (amber), undefined = solo
 }
 
@@ -20,22 +18,21 @@ export function BingoCard({
   onSquareClick,
   myPlayerId,
   marks,
-  myLineIndices,
+  mySquares,
   phase,
-  partnerLineIndices = [],
-  hasBingo = false,
+  partnerSquares = [],
   isHost,
 }: BingoCardProps) {
   // Host always teal (marked-mine), partner always amber (marked-partner)
   // If I'm the partner, swap: my marks get amber, opponent's marks get teal
   const iAmPartner = isHost === false;
 
-  const completedLineSquares = useMemo(() => {
-    // Only count lines completed by MY marks
-    const myMarkedIndices = marks.filter(m => m.markedBy === myPlayerId).map(m => m.index);
-    const lines = getCompletedLineIndices(myMarkedIndices);
-    return new Set(lines.flat());
-  }, [marks, myPlayerId]);
+  const isMyHidden = (index: number) => mySquares.includes(index);
+  const isPartnerHidden = (index: number) => phase === 'finished' && partnerSquares.includes(index);
+  const isHitOnMe = (index: number) => {
+    if (!mySquares.includes(index)) return false;
+    return marks.some(m => m.index === index && m.markedBy !== myPlayerId);
+  };
 
   const gridRef = useRef<HTMLDivElement>(null);
 
@@ -48,19 +45,26 @@ export function BingoCard({
   const getSquareClasses = (index: number) => {
     let classes = 'bingo-square';
     const { myMark, partnerMark } = getMarkInfo(index);
-    const isMyLine = myLineIndices.includes(index);
-    const isPartnerLine = phase === 'finished' && partnerLineIndices.includes(index);
 
-    // Line indicator — subtle ring in new palette
-    if (isMyLine && isPartnerLine) {
-      classes += ' ring-1 ring-j-accent/50';
-    } else if (isMyLine) {
-      classes += ' ring-1 ring-j-me/40';
-    } else if (isPartnerLine) {
-      classes += ' ring-1 ring-j-partner/40';
-    } else if (phase === 'playing' && completedLineSquares.has(index)) {
-      // Completed bingo line highlight (playing phase only, no conflict with secret line rings)
-      classes += ' ring-1 ring-j-accent/50';
+    // Hidden square indicators
+    if (phase === 'finished') {
+      const mine = isMyHidden(index);
+      const partner = isPartnerHidden(index);
+      if (mine && partner) {
+        classes += ' ring-2 ring-j-accent/60';
+      } else if (mine) {
+        classes += ' ring-1 ring-j-me/50';
+      } else if (partner) {
+        classes += ' ring-1 ring-j-partner/50';
+      }
+    } else {
+      // Playing phase
+      if (isMyHidden(index)) {
+        classes += ' ring-1 ring-j-accent/30';
+      }
+      if (isHitOnMe(index)) {
+        classes += ' ring-2 ring-red-500/60 hit-on-me';
+      }
     }
 
     // Mark colors — host always teal, partner always amber
@@ -70,10 +74,6 @@ export function BingoCard({
       classes += iAmPartner ? ' marked marked-partner' : ' marked marked-mine';
     } else if (partnerMark) {
       classes += iAmPartner ? ' marked marked-mine' : ' marked marked-partner';
-    }
-
-    if (hasBingo && (myMark || partnerMark)) {
-      classes += ' winning';
     }
 
     return classes;
@@ -128,14 +128,14 @@ export function BingoCard({
     const { myMark, partnerMark } = getMarkInfo(index);
 
     let lineInfo = '';
-    const isMyLine = myLineIndices.includes(index);
-    const isPartnerLine = phase === 'finished' && partnerLineIndices.includes(index);
-    if (isMyLine && isPartnerLine) {
-      lineInfo = ', in both lines';
-    } else if (isMyLine) {
-      lineInfo = ', in your line';
-    } else if (isPartnerLine) {
-      lineInfo = ', in partner line';
+    const mine = isMyHidden(index);
+    const partner = isPartnerHidden(index);
+    if (mine && partner) {
+      lineInfo = ', both hidden squares';
+    } else if (mine) {
+      lineInfo = ', your hidden square';
+    } else if (partner) {
+      lineInfo = ', partner hidden square';
     }
 
     let markStatus = 'unmarked';
@@ -145,7 +145,7 @@ export function BingoCard({
 
     return `${square.text}, ${position}, ${markStatus}${lineInfo}`;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [myPlayerId, marks, myLineIndices, partnerLineIndices, phase]);
+  }, [myPlayerId, marks, mySquares, partnerSquares, phase]);
 
   const totalMarked = marks.length;
 
@@ -161,15 +161,21 @@ export function BingoCard({
           <div className={`w-2.5 h-2.5 rounded-sm ${iAmPartner ? 'bg-j-me/70' : 'bg-j-partner/70'}`}></div>
           <span className={iAmPartner ? 'text-j-me' : 'text-j-partner'}>Partner marks</span>
         </div>
+        {phase === 'playing' && (
+          <div className="flex items-center gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-sm ring-1 ring-j-accent/30 bg-transparent"></div>
+            <span className="text-j-accent">Your hidden</span>
+          </div>
+        )}
         {phase === 'finished' && (
           <>
             <div className="flex items-center gap-1.5">
               <div className="w-2.5 h-2.5 rounded-sm ring-1 ring-j-me/50 bg-transparent"></div>
-              <span className="text-j-me">Your line</span>
+              <span className="text-j-me">Your squares</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-2.5 h-2.5 rounded-sm ring-1 ring-j-partner/50 bg-transparent"></div>
-              <span className="text-j-partner">Partner line</span>
+              <span className="text-j-partner">Partner squares</span>
             </div>
           </>
         )}
