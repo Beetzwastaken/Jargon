@@ -331,7 +331,7 @@ export const useDuoStore = create<DuoStore>()(
         },
 
         // Handle square marked by anyone
-        handleSquareMarked: (index: number, markedBy: string, isHit: boolean, myHits: number, partnerHits: number) => {
+        handleSquareMarked: (index: number, markedBy: string, _isHit: boolean, myHits: number, partnerHits: number) => {
           const state = get();
           // Add mark if not already present
           const alreadyMarked = state.marks.some(m => m.index === index && m.markedBy === markedBy);
@@ -357,7 +357,7 @@ export const useDuoStore = create<DuoStore>()(
         },
 
         // Handle game over
-        handleGameOver: (winner: string, myHits: number, partnerHits: number, myMarks: number, partnerMarks: number, hostSquares: number[], partnerSquaresRevealed: number[], allHit?: boolean) => {
+        handleGameOver: (winner: string, myHits: number, partnerHits: number, _myMarks: number, _partnerMarks: number, hostSquares: number[], partnerSquaresRevealed: number[], allHit?: boolean) => {
           const state = get();
           const isHost = state.isHost;
           const mySquares = isHost ? hostSquares : partnerSquaresRevealed;

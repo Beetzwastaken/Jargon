@@ -6,7 +6,7 @@ Buzzword bingo you play during real work meetings. Open the app, get a card of c
 
 **Solo** — Play during any meeting. Random card, tap buzzwords as they come up, track your score across games.
 
-**Duo** — Pair with a colleague in the same meeting. You both get the same daily card (Wordle-style, one per day). Each secretly picks a line. Score points by marking squares (+1) and completing bingo lines (+3). Complete your opponent's secret line for a Bonus Bingo — instant win! No Bonus Bingo by midnight? Highest score wins.
+**Duo** — Pair with a colleague in the same meeting. You both get the same daily card (Wordle-style, one per day). Each player secretly hides 5 squares on the board. Mark squares as you hear buzzwords — every mark that lands on one of your opponent's hidden squares is a hit. Hit all 5 of your opponent's hidden squares for an instant win! No all-hit by midnight? Most hits wins (tiebreaker: most marks).
 
 ## Play
 

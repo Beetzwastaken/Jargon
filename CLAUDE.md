@@ -1,6 +1,6 @@
 # Jargon
 
-> Buzzword bingo you play during real meetings. Tap words as you hear them, score points, hunt your opponent's secret line.
+> Buzzword bingo you play during real meetings. Tap words as you hear them, hunt your opponent's hidden squares.
 
 ## Quick Reference
 
@@ -32,27 +32,28 @@ Session hooks auto-load these on startup. See `.claude/settings.json`.
 
 ### Duo
 - 2 players pair up in same meeting, share daily card
-- Each secretly picks a line (row/col/diagonal)
-- Score = your marks (+1 each) + bingo lines you complete (+3 each)
-- **Bonus bingo** = completing opponent's secret line = instant win
-- No bonus bingo by midnight → highest score wins
+- Each secretly hides 5 squares on the board
+- Both mark squares simultaneously as buzzwords are heard
+- Score = hits on opponent's hidden squares
+- **All hit** = hitting all 5 of opponent's hidden squares = instant win
+- No all-hit by midnight → most hits wins, tiebreaker = most marks
 - WebSocket sync with HTTP polling fallback
 - **Status**: Built, deployed, tested (32 tests)
 
 ### Duo Scoring
 
-| Action | Points |
+| Action | Result |
 |--------|--------|
-| Mark a square | +1 |
-| Complete any bingo line (your marks only) | +3 |
-| Complete opponent's secret line (bonus bingo) | Instant win |
+| Mark a square that is one of opponent's hidden squares | +1 hit |
+| Hit all 5 of opponent's hidden squares | Instant win |
+| Midnight, no all-hit | Most hits wins (tiebreaker: most marks) |
 
 ### Duo Flow
 1. **Unpaired** → Enter name, create room OR join with 4-char code
 2. **Waiting** → Host shares code with partner
-3. **Selecting** → Both secretly pick a line
-4. **Playing** → Mark squares, score points, hunt opponent's line
-5. **Finished** → Bonus bingo (instant) or midnight (highest score wins)
+3. **Selecting** → Both simultaneously select 5 hidden squares
+4. **Playing** → Mark squares, accumulate hits on opponent's hidden squares
+5. **Finished** → All-hit (instant) or midnight (most hits wins)
 
 ### Daily Card
 - Seeded PRNG (Mulberry32) + Fisher-Yates shuffle
@@ -67,7 +68,7 @@ Session hooks auto-load these on startup. See `.claude/settings.json`.
 
 | Store | Purpose |
 |-------|---------|
-| `duoStore` | Pairing, lines, scores, bonusBingo, game state |
+| `duoStore` | Pairing, hidden squares, hits, allHit, game state |
 | `connectionStore` | WebSocket/polling, routes messages |
 | `soloStore` | Solo mode state + localStorage persist |
 
@@ -80,11 +81,11 @@ GET  /api/duo/:code/state, /:code/ws
 ```
 
 Key backend functions:
-- `computeScore(playerId)` — marks + completedLines × 3 (per-player)
-- `checkBonusBingo(playerId)` — all 5 squares of opponent's line marked
-- `countCompletedLines(marks, playerId)` — bingo lines from this player's marks only
+- `computeHits(playerId)` — count of marks landing on opponent's hidden squares
+- `checkAllHit(playerId)` — true if all 5 of opponent's hidden squares are marked
+- `selectSquares(playerId, squares)` — store player's 5 hidden squares
 
-WebSocket messages: `connected`, `partner_joined`, `partner_left`, `partner_selected`, `line_conflict`, `card_revealed`, `square_marked`, `square_unmarked`, `game_over`, `daily_reset`
+WebSocket messages: `connected`, `partner_joined`, `partner_left`, `partner_ready`, `both_selected` (both players have chosen hidden squares), `card_revealed`, `square_marked`, `square_unmarked`, `game_over` (includes `hits`, `allHit` fields), `daily_reset`
 
 ---
 
@@ -97,7 +98,7 @@ npx vitest run --config vitest.config.api.ts  # API integration tests (node, hit
 
 - 13 unit tests: `countCompletedLines`, `getCompletedLineIndices`
 - 10 unit tests: `duoStore.handleGameOver`, `handleDailyReset`
-- 9 API tests: scoring math, bonus bingo, shared marks, toggle
+- 9 API tests: scoring math, all-hit, shared marks, toggle
 
 ---
 
@@ -122,4 +123,4 @@ React 19, TypeScript, Vite, Tailwind, Zustand, Cloudflare Workers + Durable Obje
 
 ---
 
-*Updated: April 3, 2026 | Scoring redesign: bingo lines + bonus bingo*
+*Updated: April 7, 2026 | Battleship mode: hidden squares + hits*
