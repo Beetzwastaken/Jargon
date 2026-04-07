@@ -17,26 +17,23 @@ export function WelcomeTutorial({ show, onComplete }: WelcomeTutorialProps) {
             Your meetings needed a point. Here's one.
           </p>
           <p className="text-j-secondary">
-            Open the app before your next meeting. You'll get a card of corporate buzzwords.
-            When someone in the meeting says one — tap it.
+            Pair up with a colleague before your next meeting. You'll both get the same card
+            of corporate buzzwords. Tap them as you hear them. Try to find each other's
+            hidden squares before midnight.
           </p>
-          <div className="bg-j-raised rounded-lg p-4 text-sm text-j-secondary space-y-2">
-            <p><span className="text-j-me font-medium">Solo</span> — Play on your own during any meeting</p>
-            <p><span className="text-j-accent font-medium">Duo</span> — Pair with a colleague, hide squares, find their hidden spots</p>
-          </div>
         </div>
       )
     },
     {
-      title: "How to Play",
+      title: "How It Works",
       content: (
         <div className="space-y-4">
           <div className="space-y-3">
             {[
-              { num: '1', text: 'Pick Solo or Duo from the home screen' },
-              { num: '2', text: 'Open the app when your meeting starts' },
+              { num: '1', text: 'Create a room and share the 4-character code with a colleague' },
+              { num: '2', text: 'Each of you secretly hides 5 squares on the board' },
               { num: '3', text: 'Tap buzzwords as you hear them in the meeting' },
-              { num: '4', text: 'In Solo: complete a line to win. In Duo: find hidden squares!' }
+              { num: '4', text: 'If you tap one of their hidden squares — that\'s a hit' }
             ].map(({ num, text }) => (
               <div key={num} className="flex items-start gap-3">
                 <div className="w-7 h-7 rounded-full bg-j-accent/20 flex items-center justify-center text-j-accent font-bold text-sm font-mono flex-shrink-0">
@@ -55,19 +52,18 @@ export function WelcomeTutorial({ show, onComplete }: WelcomeTutorialProps) {
       )
     },
     {
-      title: "Duo Mode",
+      title: "Winning",
       content: (
         <div className="space-y-4">
           <p className="text-j-secondary">
-            You and a partner get the same card. Each of you secretly hides 5 squares.
-            Mark buzzwords as you hear them — if you mark one of your opponent's hidden squares, that's a hit!
-            Find all 5 of their hidden squares for an instant win.
-            No instant win by midnight? Most hits wins.
+            Find all 5 of your opponent's hidden squares for an instant win.
+            Nobody finds all 5 by midnight? Most hits wins. Tied on hits?
+            Whoever marked the most squares takes it.
           </p>
           <div className="bg-j-raised rounded-lg p-4 text-sm text-j-secondary space-y-2">
-            <p>Create a room and share the 4-character code</p>
-            <p>Or join with a code from your partner</p>
-            <p>Both hide your squares, then start tapping</p>
+            <p>Marking your own hidden square doesn't count against you</p>
+            <p>You can see which of your squares have been found</p>
+            <p>Both placements revealed at game over</p>
           </div>
           <div className="flex gap-4 text-xs font-mono">
             <div className="flex items-center gap-1.5">
