@@ -6,7 +6,6 @@ import {
   generateDailyCard,
   getTodayDateString,
   hasNewDayStarted,
-  getLineIndices,
 } from '../lib/dailyCard';
 import {
   createDuoGame,
@@ -120,20 +119,20 @@ const initialState: DuoState = {
 
   phase: 'unpaired',
 
-  myLine: null,
-  isMyTurnToPick: false,
-  partnerHasSelected: false,
+  mySquares: null,
+  myReady: false,
+  partnerReady: false,
 
   dailyCard: [],
   dailySeed: '',
 
   marks: [],
-  myScore: 0,
-  partnerScore: 0,
+  myHits: 0,
+  partnerHits: 0,
   gameOver: false,
-  bonusBingo: false,
+  allHit: false,
   winner: null,
-  partnerLine: null,
+  partnerSquares: null,
 
   snapshot: null,
 };
@@ -211,18 +210,18 @@ export const useDuoStore = create<DuoStore>()(
           set(initialState);
         },
 
-        // Select a line
-        selectLine: async (line: LineSelection) => {
+        // Select squares
+        selectSquares: async (squares: number[]) => {
           const state = get();
 
           if (!state.pairCode || !state.odId) {
             return { success: false, error: 'Not in a game' };
           }
 
-          const response = await apiSelectLine(state.pairCode, state.odId, line);
+          const response = await apiSelectSquares(state.pairCode, state.odId, squares);
 
           if (!response.success || !response.data) {
-            return { success: false, error: response.error || 'Failed to select line' };
+            return { success: false, error: response.error || 'Failed to select squares' };
           }
 
           if (!response.data.success) {
@@ -230,7 +229,7 @@ export const useDuoStore = create<DuoStore>()(
           }
 
           // Update local state
-          set({ myLine: line, isMyTurnToPick: false });
+          set({ mySquares: squares, myReady: true });
 
           // If both selected, server will send BOTH_SELECTED via WS
           return { success: true };
@@ -258,10 +257,10 @@ export const useDuoStore = create<DuoStore>()(
           const response = await apiMarkSquare(state.pairCode, state.odId, index);
 
           if (response.success && response.data) {
-            // Server confirmed - update scores
+            // Server confirmed - update hits
             set({
-              myScore: response.data.myScore,
-              partnerScore: response.data.partnerScore,
+              myHits: response.data.myHits,
+              partnerHits: response.data.partnerHits,
             });
 
             if (response.data.gameOver) {
@@ -302,22 +301,22 @@ export const useDuoStore = create<DuoStore>()(
               partnerName: null,
               isPaired: false,
               phase: 'waiting',
-              myLine: null,
-              isMyTurnToPick: false,
-              partnerHasSelected: false,
-              partnerLine: null,
+              mySquares: null,
+              myReady: false,
+              partnerReady: false,
+              partnerSquares: null,
               marks: [],
-              myScore: 0,
-              partnerScore: 0,
+              myHits: 0,
+              partnerHits: 0,
               gameOver: false,
               winner: null,
             });
           }
         },
 
-        // Handle your turn to pick
-        handleYourTurnToPick: () => {
-          set({ isMyTurnToPick: true });
+        // Handle partner ready
+        handlePartnerReady: () => {
+          set({ partnerReady: true });
         },
 
         // Handle both selected - transition to playing
@@ -327,12 +326,12 @@ export const useDuoStore = create<DuoStore>()(
           set({
             dailyCard: card,
             phase: 'playing',
-            partnerHasSelected: true,
+            partnerReady: true,
           });
         },
 
         // Handle square marked by anyone
-        handleSquareMarked: (index: number, markedBy: string, myScore: number, partnerScore: number) => {
+        handleSquareMarked: (index: number, markedBy: string, isHit: boolean, myHits: number, partnerHits: number) => {
           const state = get();
           // Add mark if not already present
           const alreadyMarked = state.marks.some(m => m.index === index && m.markedBy === markedBy);
@@ -340,29 +339,29 @@ export const useDuoStore = create<DuoStore>()(
 
           set({
             marks: newMarks,
-            myScore,
-            partnerScore,
+            myHits,
+            partnerHits,
           });
         },
 
         // Handle square unmarked
-        handleSquareUnmarked: (index: number, markedBy: string | undefined, myScore: number, partnerScore: number) => {
+        handleSquareUnmarked: (index: number, markedBy: string | undefined, myHits: number, partnerHits: number) => {
           const state = get();
           set({
             marks: markedBy
               ? state.marks.filter(m => !(m.index === index && m.markedBy === markedBy))
               : state.marks.filter(m => m.index !== index),
-            myScore,
-            partnerScore,
+            myHits,
+            partnerHits,
           });
         },
 
         // Handle game over
-        handleGameOver: (winner: string, myScore: number, partnerScore: number, hostLine: LineSelection, partnerLine: LineSelection, bonusBingo?: boolean) => {
+        handleGameOver: (winner: string, myHits: number, partnerHits: number, myMarks: number, partnerMarks: number, hostSquares: number[], partnerSquaresRevealed: number[], allHit?: boolean) => {
           const state = get();
           const isHost = state.isHost;
-          const myLine = isHost ? hostLine : partnerLine;
-          const theirLine = isHost ? partnerLine : hostLine;
+          const mySquares = isHost ? hostSquares : partnerSquaresRevealed;
+          const theirSquares = isHost ? partnerSquaresRevealed : hostSquares;
 
           // Map winner to me/partner/tie
           let winnerValue: 'me' | 'partner' | 'tie' | null = null;
@@ -380,12 +379,12 @@ export const useDuoStore = create<DuoStore>()(
           set({
             phase: 'finished',
             gameOver: true,
-            bonusBingo: bonusBingo ?? false,
+            allHit: allHit ?? false,
             winner: winnerValue,
-            myScore,
-            partnerScore,
-            myLine: myLine,
-            partnerLine: theirLine,
+            myHits,
+            partnerHits,
+            mySquares,
+            partnerSquares: theirSquares,
           });
         },
 
@@ -394,17 +393,17 @@ export const useDuoStore = create<DuoStore>()(
           const state = get();
 
           set({
-            myLine: null,
-            partnerLine: null,
-            isMyTurnToPick: false,
-            partnerHasSelected: false,
+            mySquares: null,
+            partnerSquares: null,
+            myReady: false,
+            partnerReady: false,
             dailyCard: [],
             dailySeed: newSeed,
             marks: [],
-            myScore: 0,
-            partnerScore: 0,
+            myHits: 0,
+            partnerHits: 0,
             gameOver: false,
-            bonusBingo: false,
+            allHit: false,
             winner: null,
             snapshot: null,
             phase: state.isPaired ? 'selecting' : 'unpaired',
@@ -423,18 +422,6 @@ export const useDuoStore = create<DuoStore>()(
           return false;
         },
 
-        // Get indices for my line
-        getMyLineIndices: () => {
-          const state = get();
-          return state.myLine ? getLineIndices(state.myLine) : [];
-        },
-
-        // Get indices for partner's line
-        getPartnerLineIndices: () => {
-          const state = get();
-          return state.partnerLine ? getLineIndices(state.partnerLine) : [];
-        },
-
         // Load yesterday's snapshot
         loadSnapshot: async () => {
           const state = get();
@@ -446,11 +433,13 @@ export const useDuoStore = create<DuoStore>()(
             set({
               snapshot: {
                 date: snap.date,
-                myLine: snap.myLine,
-                partnerLine: snap.partnerLine,
+                mySquares: snap.mySquares,
+                partnerSquares: snap.partnerSquares,
                 marks: snap.marks,
-                myScore: snap.myScore,
-                partnerScore: snap.partnerScore,
+                myHits: snap.myHits,
+                partnerHits: snap.partnerHits,
+                myMarks: snap.myMarks,
+                partnerMarks: snap.partnerMarks,
                 winner: snap.winner,
               },
             });
@@ -468,16 +457,16 @@ export const useDuoStore = create<DuoStore>()(
           isPaired: state.isPaired,
           isHost: state.isHost,
           phase: state.phase,
-          myLine: state.myLine,
-          isMyTurnToPick: state.isMyTurnToPick,
-          partnerHasSelected: state.partnerHasSelected,
+          mySquares: state.mySquares,
+          myReady: state.myReady,
+          partnerReady: state.partnerReady,
           dailySeed: state.dailySeed,
           marks: state.marks,
-          myScore: state.myScore,
-          partnerScore: state.partnerScore,
+          myHits: state.myHits,
+          partnerHits: state.partnerHits,
           gameOver: state.gameOver,
           winner: state.winner,
-          partnerLine: state.partnerLine,
+          partnerSquares: state.partnerSquares,
         }),
         onRehydrateStorage: () => (state) => {
           if (!state) return;

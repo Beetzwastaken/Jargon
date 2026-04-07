@@ -144,10 +144,6 @@ function handleWebSocketMessage(message: DuoWebSocketMessage): void {
 
   switch (message.type) {
     case DUO_MESSAGE_TYPES.CONNECTED:
-      // Set turn info if present
-      if (typeof message.isMyTurnToPick === 'boolean') {
-        useDuoStore.setState({ isMyTurnToPick: message.isMyTurnToPick });
-      }
       break;
 
     case DUO_MESSAGE_TYPES.PARTNER_JOINED:
@@ -156,9 +152,6 @@ function handleWebSocketMessage(message: DuoWebSocketMessage): void {
           id: message.partnerId,
           name: message.partnerName
         });
-        if (typeof message.isMyTurnToPick === 'boolean') {
-          useDuoStore.setState({ isMyTurnToPick: message.isMyTurnToPick });
-        }
       }
       break;
 
@@ -170,8 +163,8 @@ function handleWebSocketMessage(message: DuoWebSocketMessage): void {
       break;
     }
 
-    case DUO_MESSAGE_TYPES.YOUR_TURN_TO_PICK:
-      duoStore.handleYourTurnToPick();
+    case DUO_MESSAGE_TYPES.PARTNER_READY:
+      duoStore.handlePartnerReady();
       break;
 
     case DUO_MESSAGE_TYPES.BOTH_SELECTED:
@@ -182,9 +175,9 @@ function handleWebSocketMessage(message: DuoWebSocketMessage): void {
       if (typeof message.index === 'number' && message.markedBy) {
         const ds = useDuoStore.getState();
         const isHost = ds.isHost;
-        const myScore = isHost ? (message.hostScore ?? ds.myScore) : (message.partnerScore ?? ds.myScore);
-        const partnerScore = isHost ? (message.partnerScore ?? ds.partnerScore) : (message.hostScore ?? ds.partnerScore);
-        duoStore.handleSquareMarked(message.index, message.markedBy, myScore, partnerScore);
+        const myHits = isHost ? (message.hostHits ?? ds.myHits) : (message.partnerHits ?? ds.myHits);
+        const partnerHits = isHost ? (message.partnerHits ?? ds.partnerHits) : (message.hostHits ?? ds.partnerHits);
+        duoStore.handleSquareMarked(message.index, message.markedBy, !!message.isHit, myHits, partnerHits);
       }
       break;
 
@@ -192,19 +185,21 @@ function handleWebSocketMessage(message: DuoWebSocketMessage): void {
       if (typeof message.index === 'number') {
         const ds = useDuoStore.getState();
         const isHost = ds.isHost;
-        const myScore = isHost ? (message.hostScore ?? ds.myScore) : (message.partnerScore ?? ds.myScore);
-        const partnerScore = isHost ? (message.partnerScore ?? ds.partnerScore) : (message.hostScore ?? ds.partnerScore);
-        duoStore.handleSquareUnmarked(message.index, message.markedBy, myScore, partnerScore);
+        const myHits = isHost ? (message.hostHits ?? ds.myHits) : (message.partnerHits ?? ds.myHits);
+        const partnerHits = isHost ? (message.partnerHits ?? ds.partnerHits) : (message.hostHits ?? ds.partnerHits);
+        duoStore.handleSquareUnmarked(message.index, message.markedBy, myHits, partnerHits);
       }
       break;
 
     case DUO_MESSAGE_TYPES.GAME_OVER:
-      if (message.winner && message.hostLine && message.partnerLine) {
+      if (message.winner && message.hostSquares && message.partnerSquares) {
         const ds = useDuoStore.getState();
         const isHost = ds.isHost;
-        const myScore = isHost ? (message.hostScore ?? ds.myScore) : (message.partnerScore ?? ds.myScore);
-        const partnerScore = isHost ? (message.partnerScore ?? ds.partnerScore) : (message.hostScore ?? ds.partnerScore);
-        duoStore.handleGameOver(message.winner, myScore, partnerScore, message.hostLine, message.partnerLine, message.bonusBingo ?? false);
+        const myHits = isHost ? (message.hostHits ?? ds.myHits) : (message.partnerHits ?? ds.myHits);
+        const partnerHits = isHost ? (message.partnerHits ?? ds.partnerHits) : (message.hostHits ?? ds.partnerHits);
+        const myMarks = isHost ? (message.hostMarks ?? 0) : (message.partnerMarks ?? 0);
+        const partnerMarks = isHost ? (message.partnerMarks ?? 0) : (message.hostMarks ?? 0);
+        duoStore.handleGameOver(message.winner, myHits, partnerHits, myMarks, partnerMarks, message.hostSquares, message.partnerSquares, message.allHit);
       }
       break;
 
@@ -248,8 +243,8 @@ function handlePollingUpdate(state: DuoStateUpdate): void {
   // Update selection state
   if (state.phase === 'selecting') {
     useDuoStore.setState({
-      isMyTurnToPick: state.isMyTurnToPick ?? false,
-      partnerHasSelected: state.partnerHasSelected ?? false,
+      myReady: state.myReady ?? false,
+      partnerReady: state.partnerReady ?? false,
     });
   }
 
@@ -260,14 +255,14 @@ function handlePollingUpdate(state: DuoStateUpdate): void {
     if (state.marks) {
       updates.marks = state.marks;
     }
-    if (typeof state.myScore === 'number') {
-      updates.myScore = state.myScore;
+    if (typeof state.myHits === 'number') {
+      updates.myHits = state.myHits;
     }
-    if (typeof state.partnerScore === 'number') {
-      updates.partnerScore = state.partnerScore;
+    if (typeof state.partnerHits === 'number') {
+      updates.partnerHits = state.partnerHits;
     }
-    if (state.myLine) {
-      updates.myLine = state.myLine;
+    if (state.mySquares) {
+      updates.mySquares = state.mySquares;
     }
 
     // Finished-only fields
@@ -281,8 +276,8 @@ function handlePollingUpdate(state: DuoStateUpdate): void {
         updates.winner = winnerValue;
         updates.gameOver = true;
       }
-      if (state.partnerLine) {
-        updates.partnerLine = state.partnerLine;
+      if (state.partnerSquares) {
+        updates.partnerSquares = state.partnerSquares;
       }
     }
 

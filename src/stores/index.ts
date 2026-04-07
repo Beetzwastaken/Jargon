@@ -4,4 +4,4 @@ export { useDuoStore, regenerateDailyCardIfNeeded } from './duoStore';
 
 // Export types from shared types
 export type { BingoSquare, BingoPlayer, BingoRoom } from '../types';
-export type { LineSelection, DuoPhase } from './duoStore';
+export type { DuoPhase } from './duoStore';
