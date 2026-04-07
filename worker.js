@@ -71,44 +71,6 @@ function getTodayUTC() {
   return new Date().toISOString().split('T')[0];
 }
 
-// Get line indices for scoring
-function getLineIndices(line) {
-  switch (line.type) {
-    case 'row':
-      const rowStart = line.index * 5;
-      return [rowStart, rowStart + 1, rowStart + 2, rowStart + 3, rowStart + 4];
-    case 'col':
-      return [line.index, line.index + 5, line.index + 10, line.index + 15, line.index + 20];
-    case 'diag':
-      if (line.index === 0) return [0, 6, 12, 18, 24];
-      else return [4, 8, 12, 16, 20];
-    default:
-      return [];
-  }
-}
-
-// All 12 possible bingo lines
-const ALL_LINES = [
-  { type: 'row', index: 0 }, { type: 'row', index: 1 }, { type: 'row', index: 2 },
-  { type: 'row', index: 3 }, { type: 'row', index: 4 },
-  { type: 'col', index: 0 }, { type: 'col', index: 1 }, { type: 'col', index: 2 },
-  { type: 'col', index: 3 }, { type: 'col', index: 4 },
-  { type: 'diag', index: 0 }, { type: 'diag', index: 1 }
-];
-
-// Count how many bingo lines are fully marked by a specific player
-function countCompletedLines(marks, playerId) {
-  const playerMarks = new Set(marks.filter(m => m.marked_by === playerId).map(m => m.idx));
-  let count = 0;
-  for (const line of ALL_LINES) {
-    const indices = getLineIndices(line);
-    if (indices.every(idx => playerMarks.has(idx))) {
-      count++;
-    }
-  }
-  return count;
-}
-
 // Main Worker
 export default {
   async fetch(request, env) {
@@ -421,9 +383,10 @@ export class BingoRoom {
         partner_id TEXT,
         partner_name TEXT,
         phase TEXT DEFAULT 'waiting',
-        host_line TEXT,
-        partner_line TEXT,
-        host_first_pick INTEGER,
+        host_squares TEXT,
+        partner_squares TEXT,
+        host_ready INTEGER DEFAULT 0,
+        partner_ready INTEGER DEFAULT 0,
         daily_seed TEXT,
         created_at INTEGER,
         last_activity INTEGER
@@ -439,11 +402,13 @@ export class BingoRoom {
         host_name TEXT,
         partner_id TEXT,
         partner_name TEXT,
-        host_score INTEGER,
-        partner_score INTEGER,
+        host_hits INTEGER,
+        partner_hits INTEGER,
+        host_marks INTEGER,
+        partner_marks INTEGER,
         winner TEXT,
-        host_line TEXT,
-        partner_line TEXT,
+        host_squares TEXT,
+        partner_squares TEXT,
         marks_json TEXT
       );
     `);
@@ -454,9 +419,10 @@ export class BingoRoom {
     if (!row) return null;
     return {
       ...row,
-      host_line: row.host_line ? JSON.parse(row.host_line) : null,
-      partner_line: row.partner_line ? JSON.parse(row.partner_line) : null,
-      host_first_pick: !!row.host_first_pick
+      host_squares: row.host_squares ? JSON.parse(row.host_squares) : null,
+      partner_squares: row.partner_squares ? JSON.parse(row.partner_squares) : null,
+      host_ready: !!row.host_ready,
+      partner_ready: !!row.partner_ready
     };
   }
 
@@ -468,8 +434,8 @@ export class BingoRoom {
     for (const key of keys) {
       sets.push(`${key} = ?`);
       const val = fields[key];
-      // Serialize line objects as JSON
-      if (key === 'host_line' || key === 'partner_line') {
+      // Serialize squares arrays as JSON
+      if (key === 'host_squares' || key === 'partner_squares') {
         vals.push(val !== null && val !== undefined ? JSON.stringify(val) : null);
       } else if (typeof val === 'boolean') {
         vals.push(val ? 1 : 0);
@@ -484,52 +450,37 @@ export class BingoRoom {
     return this.sql.exec('SELECT idx, marked_by, marked_at FROM marks ORDER BY idx').toArray();
   }
 
-  computeScore(playerId, room) {
-    // Score = squares this player marked + (completed bingo lines × 3)
+  // Count opponent's hidden squares that have been marked by someone other than the opponent
+  computeHits(playerId, room) {
+    const isHost = playerId === room.host_id;
+    const opponentSquares = isHost ? room.partner_squares : room.host_squares;
+    if (!opponentSquares) return 0;
+    const opponentId = isHost ? room.partner_id : room.host_id;
     const marks = this.getMarks();
-    const myMarks = marks.filter(m => m.marked_by === playerId).length;
-    const completedLines = countCompletedLines(marks, playerId);
-    return myMarks + (completedLines * 3);
+    const opponentSquareSet = new Set(opponentSquares);
+    // Only marks by someone OTHER than the opponent count as hits
+    return marks.filter(m => opponentSquareSet.has(m.idx) && m.marked_by !== opponentId).length;
   }
 
-  // Check if player completed opponent's secret line (bonus bingo = instant win)
-  checkBonusBingo(playerId, room) {
-    const isHost = playerId === room.host_id;
-    const opponentLine = isHost ? room.partner_line : room.host_line;
-    if (!opponentLine) return false;
-    const lineIndices = getLineIndices(opponentLine);
+  // Count total marks placed by a player
+  countMarks(playerId) {
     const marks = this.getMarks();
-    return lineIndices.every(idx => marks.some(m => m.idx === idx));
+    return marks.filter(m => m.marked_by === playerId).length;
+  }
+
+  // Check if all 5 of opponent's hidden squares are hit
+  checkAllHit(playerId, room) {
+    return this.computeHits(playerId, room) >= 5;
   }
 
   computeScores(room) {
-    if (!room.host_line || !room.partner_line) return { hostScore: 0, partnerScore: 0 };
+    if (!room.host_squares || !room.partner_squares) return { hostHits: 0, partnerHits: 0, hostMarks: 0, partnerMarks: 0 };
     return {
-      hostScore: this.computeScore(room.host_id, room),
-      partnerScore: this.computeScore(room.partner_id, room)
+      hostHits: this.computeHits(room.host_id, room),
+      partnerHits: this.computeHits(room.partner_id, room),
+      hostMarks: this.countMarks(room.host_id),
+      partnerMarks: this.countMarks(room.partner_id)
     };
-  }
-
-  isPickTurn(playerId, room) {
-    // Determine pick order from UTC date seed
-    const seed = dateToSeed(room.daily_seed);
-    const isEven = seed % 2 === 0;
-    const firstPickerId = isEven ? room.host_id : room.partner_id;
-    const secondPickerId = isEven ? room.partner_id : room.host_id;
-
-    const firstHasPicked = firstPickerId === room.host_id ? !!room.host_line : !!room.partner_line;
-    const secondHasPicked = secondPickerId === room.host_id ? !!room.host_line : !!room.partner_line;
-
-    if (!firstHasPicked) {
-      // Only first picker can go
-      return playerId === firstPickerId;
-    }
-    if (!secondHasPicked) {
-      // Only second picker can go
-      return playerId === secondPickerId;
-    }
-    // Both have picked
-    return false;
   }
 
   // --- Routing ---
@@ -540,7 +491,7 @@ export class BingoRoom {
     try {
       if (url.pathname === '/duo/create') return await this.createDuoGame(request);
       if (url.pathname === '/duo/join') return await this.joinDuoGame(request);
-      if (url.pathname === '/duo/select') return await this.selectLine(request);
+      if (url.pathname === '/duo/select') return await this.selectSquares(request);
       if (url.pathname === '/duo/mark') return await this.markSquare(request);
       if (url.pathname === '/duo/leave') return await this.leaveGame(request);
       if (url.pathname === '/duo/state') return await this.getState(request);
@@ -570,14 +521,12 @@ export class BingoRoom {
 
     const hostId = crypto.randomUUID();
     const dailySeed = getTodayUTC();
-    const seed = dateToSeed(dailySeed);
-    const hostFirstPick = seed % 2 === 0;
     const now = Date.now();
 
     this.sql.exec(
-      `INSERT OR REPLACE INTO room (id, code, host_id, host_name, partner_id, partner_name, phase, host_line, partner_line, host_first_pick, daily_seed, created_at, last_activity)
-       VALUES (1, ?, ?, ?, NULL, NULL, 'waiting', NULL, NULL, ?, ?, ?, ?)`,
-      roomCode, hostId, playerName, hostFirstPick ? 1 : 0, dailySeed, now, now
+      `INSERT OR REPLACE INTO room (id, code, host_id, host_name, partner_id, partner_name, phase, host_squares, partner_squares, host_ready, partner_ready, daily_seed, created_at, last_activity)
+       VALUES (1, ?, ?, ?, NULL, NULL, 'waiting', NULL, NULL, 0, 0, ?, ?, ?)`,
+      roomCode, hostId, playerName, dailySeed, now, now
     );
 
     return new Response(JSON.stringify({
@@ -649,18 +598,15 @@ export class BingoRoom {
       last_activity: Date.now()
     });
 
-    const updatedRoom = this.getRoom();
     this.sendToPlayer(room.host_id, {
       type: 'partner_joined',
       partnerId,
-      partnerName: playerName,
-      isMyTurnToPick: this.isPickTurn(room.host_id, updatedRoom)
+      partnerName: playerName
     });
     this.sendToPlayer(partnerId, {
       type: 'partner_joined',
       partnerId: room.host_id,
-      partnerName: room.host_name,
-      isMyTurnToPick: this.isPickTurn(partnerId, updatedRoom)
+      partnerName: room.host_name
     });
 
     return new Response(JSON.stringify({
@@ -699,8 +645,10 @@ export class BingoRoom {
       this.updateRoom({
         partner_id: null,
         partner_name: null,
-        partner_line: null,
-        host_line: null,
+        partner_squares: null,
+        host_squares: null,
+        host_ready: false,
+        partner_ready: false,
         phase: 'waiting',
         last_activity: Date.now()
       });
@@ -711,11 +659,11 @@ export class BingoRoom {
     });
   }
 
-  // --- Task 4: Select Line (Sequential) ---
+  // --- Task 4: Select Squares (Simultaneous) ---
 
-  async selectLine(request) {
+  async selectSquares(request) {
     const playerId = request.headers.get('X-Player-ID');
-    const { line } = await request.json();
+    const { squares } = await request.json();
     const room = this.getRoom();
 
     if (!room) {
@@ -742,38 +690,50 @@ export class BingoRoom {
       });
     }
 
-    // Validate line format
-    if (!line || !['row', 'col', 'diag'].includes(line.type) || typeof line.index !== 'number') {
-      return new Response(JSON.stringify({ error: 'Invalid line selection' }), {
+    // Validate squares: exactly 5 unique indices 0-24
+    if (!Array.isArray(squares) || squares.length !== 5) {
+      return new Response(JSON.stringify({ error: 'Must select exactly 5 squares' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    // Enforce turn order
-    if (!this.isPickTurn(playerId, room)) {
-      return new Response(JSON.stringify({ error: 'Not your turn to pick' }), {
+    const uniqueSet = new Set(squares);
+    if (uniqueSet.size !== 5) {
+      return new Response(JSON.stringify({ error: 'Squares must be unique' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    // Check if line already taken by first picker
-    const existingLine = isHost ? room.partner_line : room.host_line;
-    if (existingLine && existingLine.type === line.type && existingLine.index === line.index) {
-      return new Response(JSON.stringify({ error: 'Line already taken' }), {
+    if (!squares.every(s => Number.isInteger(s) && s >= 0 && s <= 24)) {
+      return new Response(JSON.stringify({ error: 'Squares must be integers 0-24' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    // Store selection
-    const fieldName = isHost ? 'host_line' : 'partner_line';
-    this.updateRoom({ [fieldName]: line, last_activity: Date.now() });
+    // Already submitted?
+    const alreadyReady = isHost ? room.host_ready : room.partner_ready;
+    if (alreadyReady) {
+      return new Response(JSON.stringify({ error: 'Already submitted squares' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
 
-    // Re-read room to check if both selected
+    // Store selection + set ready flag
+    const squaresField = isHost ? 'host_squares' : 'partner_squares';
+    const readyField = isHost ? 'host_ready' : 'partner_ready';
+    this.updateRoom({ [squaresField]: squares, [readyField]: true, last_activity: Date.now() });
+
+    // Notify partner that this player is ready
+    const partnerId = isHost ? room.partner_id : room.host_id;
+    this.sendToPlayer(partnerId, { type: 'partner_ready' });
+
+    // Check if both ready
     const updatedRoom = this.getRoom();
-    if (updatedRoom.host_line && updatedRoom.partner_line) {
+    if (updatedRoom.host_ready && updatedRoom.partner_ready) {
       // Both selected -> playing
       this.updateRoom({ phase: 'playing' });
       this.broadcastToRoom({ type: 'both_selected', phase: 'playing' });
@@ -785,12 +745,6 @@ export class BingoRoom {
         headers: { 'Content-Type': 'application/json' }
       });
     }
-
-    // Only first picker done — notify second picker
-    const seed = dateToSeed(room.daily_seed);
-    const isEven = seed % 2 === 0;
-    const secondPickerId = isEven ? room.partner_id : room.host_id;
-    this.sendToPlayer(secondPickerId, { type: 'your_turn_to_pick' });
 
     return new Response(JSON.stringify({
       success: true,
