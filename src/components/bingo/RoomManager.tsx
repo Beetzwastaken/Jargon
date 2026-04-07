@@ -5,10 +5,14 @@ import { showGameToast } from '../shared/ToastNotification';
 
 type View = 'main' | 'create' | 'join';
 
-export function RoomManager() {
-  const [view, setView] = useState<View>('main');
+interface RoomManagerProps {
+  initialJoinCode?: string | null;
+}
+
+export function RoomManager({ initialJoinCode }: RoomManagerProps = {}) {
+  const [view, setView] = useState<View>(initialJoinCode ? 'join' : 'main');
   const [playerName, setPlayerName] = useState('');
-  const [joinCode, setJoinCode] = useState('');
+  const [joinCode, setJoinCode] = useState(initialJoinCode || '');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

@@ -24,7 +24,7 @@ function ComponentLoader() {
 
 function App() {
   const [mode, setMode] = useState<null | 'solo' | 'duo'>(null);
-  const [, setJoinCode] = useState<string | null>(null);
+  const [joinCode, setJoinCode] = useState<string | null>(null);
   const [showTutorial, setShowTutorial] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -142,7 +142,7 @@ function App() {
   return (
     <div className="h-screen bg-j-bg text-j-text font-display flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="bg-j-surface/80 border-b border-white/[0.06] z-50 backdrop-blur-xl flex-shrink-0">
+      <header className="bg-j-surface/80 border-b border-white/[0.06] z-50 backdrop-blur-xl flex-shrink-0 sticky top-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-14">
             {/* Logo + Back */}
@@ -237,7 +237,7 @@ function App() {
             {/* Phase: Unpaired - Show RoomManager */}
             {phase === 'unpaired' && (
               <Suspense fallback={<ComponentLoader />}>
-                <RoomManager />
+                <RoomManager initialJoinCode={joinCode} />
               </Suspense>
             )}
 
