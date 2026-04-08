@@ -1,5 +1,63 @@
 # Jargon — Progress Log
 
+## 2026-04-07 — Battleship Mode + Rebrand
+
+### What we did
+- **Replaced bingo line selection with battleship mechanics** — each player hides 5 individual squares instead of picking a line
+- Scoring is now hits-based: mark opponent's hidden square = hit. 5/5 hits = instant win. Midnight fallback = most hits, tiebreaker = most marks.
+- Selection is simultaneous (both pick at same time, no turn order)
+- Marking your own hidden square doesn't count as a hit against you
+- **New tagline:** "your meetings needed a point. here's one."
+- Removed all "buzzword bingo" branding from user-facing text
+- Disabled solo mode (code still exists, button hidden)
+- Rewrote tutorial for duo-only battleship flow (3 steps: welcome, how it works, winning)
+- Fixed join link (`?join=CODE`) — now goes directly to join form with code pre-filled
+- Fixed mobile header — `fixed` positioning so it stays pinned while scrolling
+- Dimmed non-hit marks in finished phase so hits visually pop
+- Curated buzzword list: removed 7 (Resource Allocation, Can You See My Screen, Touch Points, Disrupt, Pivot, Thought Leader, Ecosystem), renamed AI-powered → AI. 149 → 142 phrases.
+- Full visual testing via Playwright: home → create → select → play → hit → instant win → share card
+- 79 unit tests passing, build clean
+
+### Key commits
+```
+306181b backend: replace bingo lines w/ battleship squares selection + hit scoring
+bb9cc7f backend: battleship mark/state/snapshot/reset + remove bingo line logic
+11c822c frontend types: replace line selection w/ squares, scores w/ hits
+845d1b2 frontend stores: battleship squares selection + hit tracking
+e3894d4 replace LineSelector w/ SquareSelector for battleship 5-square placement
+85dff8a BingoCard: battleship hit styling, hidden square indicators
+30300a3 scoreboard/gameover/share: hits-based display for battleship mode
+faf20c4 App.tsx: wire up battleship square selection + hit display
+734a104 rebrand: "your meetings needed a point. here's one."
+718e6f4 disable solo mode, rewrite tutorial for duo-only battleship
+1fbe54e fix: join link pre-fills code + sticky header on mobile
+694680e dim non-hit marks in finished phase so hits stand out
+```
+
+### Key files changed
+- `worker.js` — schema (host_squares/partner_squares/host_ready/partner_ready), selectSquares, computeHits, checkAllHit, hit-based mark/state/snapshot/reset
+- `src/stores/duoStore.ts` — mySquares/partnerSquares/myHits/partnerHits/allHit/myReady/partnerReady
+- `src/stores/connectionStore.ts` — partner_ready message, hit-based score mapping
+- `src/components/bingo/LineSelector.tsx` — rewritten as SquareSelector (tap 5 squares, lock in)
+- `src/components/bingo/BingoCard.tsx` — hidden square indicators, hit styling, dimmed non-hits
+- `src/components/bingo/DuoScoreboard.tsx` — X/5 hit counters
+- `src/components/bingo/GameOverScreen.tsx` — "All 5 sunk!" win text, hits display
+- `src/components/bingo/ShareCard.tsx` — emoji grid with 🟦🟧💥🟪
+- `src/components/ModeSelector.tsx` — solo button removed, new tagline
+- `src/components/shared/WelcomeTutorial.tsx` — duo-only 3-step tutorial
+- `src/components/bingo/RoomManager.tsx` — accepts initialJoinCode prop
+- `src/App.tsx` — fixed header, join code passthrough, battleship wiring
+- `index.html`, `manifest.json`, `README.md`, `CLAUDE.md` — rebrand
+
+### Next session
+- Real phone testing (iOS Safari, Android Chrome)
+- Hit animation — "something cool" when you land a hit (spec calls for it, not yet built)
+- Consider: demotivational sayings per square (friend's idea from Discord)
+- Consider: productivity meter / meeting cost calculator
+- Rewrite API integration tests for battleship (currently stale)
+
+---
+
 ## 2026-04-01 — Duo Mode Redesign: Spec, Plan, Implementation
 
 ### What we did
